@@ -704,7 +704,8 @@ async function renderMaterials(){
     sb.from('assignments').select('*').order('created_at', { ascending: false })
   ]);
   
-  const folders = foldersRes.data || [];
+  // فلتر الفولدرات المخفية عن الطالب
+  const folders = (foldersRes.data || []).filter(f => admin || f.is_visible);
   const materials = materialsRes.data || [];
   const assignments = assignmentsRes.data || [];
   
@@ -739,7 +740,7 @@ async function renderMaterials(){
     contentHTML += `
       <div class="card" style="margin-bottom:20px;border-right:4px solid var(--primary)">
         <div class="card-header">
-          <h3 class="card-title">📁 ${escapeHtml(folder.name)}</h3>
+          <h3 class="card-title">📁 ${escapeHtml(folder.name)} ${!folder.is_visible && admin ? '<span class="badge badge-warning">مخفي</span>' : ''}</h3>
           ${admin ? `
             <div class="btn-group">
               <button class="btn btn-sm btn-outline" data-action="edit-folder" data-id="${folder.id}">✏️</button>
@@ -817,11 +818,13 @@ async function renderMaterials(){
     `;
   }
   
+  // الإصلاح: لو مفيش حاجة، حط الرسالة جوه الكارد
   if(folders.length === 0 && noFolderMaterials.length === 0 && noFolderAssignments.length === 0){
     contentHTML = `<div class="empty-state"><div class="icon">📖</div><p>لا توجد ملفات بعد</p></div>`;
   }
   
-  area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📖 التعلم الذاتي</h3>${addBtn}</div></div>${contentHTML}`;
+  // الإصلاح: حط كل حاجة جوه كارد واحد
+  area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📖 التعلم الذاتي</h3>${addBtn}</div>${contentHTML}</div>`;
   
   if(admin){
     $('#addFolderBtn')?.addEventListener('click', () => openFolderModal());
@@ -840,7 +843,7 @@ async function renderMaterials(){
 
 function openFolderModal(id = null){
   (async () => {
-    let folder = { name: '', description: '', order_index: 0 };
+    let folder = { name: '', description: '', order_index: 0, is_visible: true };
     if(id){
       const { data } = await sb.from('folders').select('*').eq('id', id).single();
       if(data) folder = data;
@@ -850,6 +853,13 @@ function openFolderModal(id = null){
       <div class="input-group"><label>اسم الفولدر</label><input type="text" id="folderName" value="${escapeHtml(folder.name)}" required/></div>
       <div class="input-group"><label>الوصف (اختياري)</label><textarea id="folderDesc" rows="3">${escapeHtml(folder.description || '')}</textarea></div>
       <div class="input-group"><label>ترتيب العرض</label><input type="number" id="folderOrder" value="${folder.order_index || 0}" min="0"/></div>
+      <div class="input-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="folderVisible" ${folder.is_visible !== false ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer"/>
+          <span>ظاهر للطلاب</span>
+        </label>
+        <small class="muted" style="display:block;margin-top:4px">لو مش معلّم، الفولدر هيكون مخفي عن الطلاب بس ظاهر للإدارة</small>
+      </div>
       <button type="submit" class="btn-primary">حفظ</button></form>`);
     
     $('#folderForm').addEventListener('submit', async e => {
@@ -858,6 +868,7 @@ function openFolderModal(id = null){
         name: $('#folderName').value.trim(),
         description: $('#folderDesc').value.trim(),
         order_index: parseInt($('#folderOrder').value) || 0,
+        is_visible: $('#folderVisible').checked,
         created_by: currentProfile.id
       };
       
@@ -1247,12 +1258,31 @@ async function renderAssignmentResults(){
 
 async function renderProjects(){
   const area=$('#contentArea'); const admin=isAdmin();
-  const {data:projs}=await sb.from('projects').select('*').order('created_at',{ascending:false});
+  
+  const { data: projs, error } = await sb.from('projects').select('*').order('created_at',{ascending:false});
+  
+  if(error){
+    area.innerHTML = `<div class="card"><div class="empty-state"><div class="icon">⚠️</div><p>خطأ في تحميل البروجيكتات: ${escapeHtml(error.message)}</p></div></div>`;
+    return;
+  }
+  
   const addBtn=admin?`<button class="btn btn-primary-solid" id="addProjectBtn">+ بروجيكت</button>`:'';
-  const body=(!projs||!projs.length)?`<div class="empty-state"><div class="icon">🎯</div><p>لا توجد بروجيكتات</p></div>`:`<div style="display:flex;flex-direction:column;gap:15px">${projs.map(p=>`<div class="item-card"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.description||'')}</p>${p.deadline?`<div class="item-meta"><span class="badge badge-warning">⏰ ${formatDate(p.deadline)}</span></div>`:''}<div class="btn-group"><button class="btn btn-primary-solid btn-sm submit-project-btn" data-id="${p.id}">📤 تسليم</button>${admin?`<button class="btn btn-outline btn-sm view-subs-btn" data-id="${p.id}">👁️ التسليمات</button><button class="btn btn-danger btn-sm delete-project-btn" data-id="${p.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`;
+  
+  let body;
+  if(!projs || !projs.length){
+    body = `<div class="empty-state"><div class="icon">🎯</div><p>لا توجد بروجيكتات</p></div>`;
+  } else {
+    body = `<div style="display:flex;flex-direction:column;gap:15px">${projs.map(p=>`<div class="item-card"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.description||'')}</p>${p.deadline?`<div class="item-meta"><span class="badge badge-warning">⏰ ${formatDate(p.deadline)}</span></div>`:''}<div class="btn-group"><button class="btn btn-primary-solid btn-sm submit-project-btn" data-id="${p.id}">📤 تسليم</button>${admin?`<button class="btn btn-outline btn-sm view-subs-btn" data-id="${p.id}">👁️ التسليمات</button><button class="btn btn-danger btn-sm delete-project-btn" data-id="${p.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`;
+  }
+  
   area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">🎯 البروجيكت</h3>${addBtn}</div>${body}</div>`;
   
-  if(admin) $('#addProjectBtn')?.addEventListener('click', openProjectModal);
+  if(admin){
+    const addBtnEl = $('#addProjectBtn');
+    if(addBtnEl){
+      addBtnEl.addEventListener('click', openProjectModal);
+    }
+  }
   $$('.submit-project-btn').forEach(b => b.addEventListener('click', () => submitProject(parseInt(b.dataset.id))));
   $$('.view-subs-btn').forEach(b => b.addEventListener('click', () => viewProjectSubmissions(parseInt(b.dataset.id))));
   $$('.delete-project-btn').forEach(b => b.addEventListener('click', () => deleteProject(parseInt(b.dataset.id))));
@@ -1265,31 +1295,50 @@ function openProjectModal(){
     <div class="input-group"><label>الموعد النهائي (اختياري)</label><input type="datetime-local" id="projDeadline"/></div>
     <button type="submit" class="btn-primary" id="projSaveBtn">إنشاء</button></form>`);
   
-  $('#projForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const btn = $('#projSaveBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loader"></span> جاري الإنشاء...';
-    
-    try {
-      const { error } = await sb.from('projects').insert({
-        title: $('#projTitle').value.trim(),
-        description: $('#projDesc').value.trim(),
-        deadline: $('#projDeadline').value ? new Date($('#projDeadline').value).toISOString() : null,
-        created_by: currentProfile.id
-      });
+  const form = $('#projForm');
+  if(form){
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = $('#projSaveBtn');
+      if(!btn) return;
       
-      if(error) throw error;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> جاري الإنشاء...';
       
-      toast('✅ تم إنشاء البروجيكت','success');
-      closeModal();
-      renderProjects();
-    } catch(err) {
-      toast('❌ ' + err.message, 'error');
-      btn.disabled = false;
-      btn.innerHTML = 'إنشاء';
-    }
-  });
+      try {
+        const title = $('#projTitle').value.trim();
+        const description = $('#projDesc').value.trim();
+        const deadlineEl = $('#projDeadline');
+        const deadline = deadlineEl && deadlineEl.value ? new Date(deadlineEl.value).toISOString() : null;
+        
+        const { data, error } = await sb.from('projects').insert({
+          title: title,
+          description: description,
+          deadline: deadline,
+          created_by: currentProfile.id
+        }).select();
+        
+        if(error){
+          console.error('Project insert error:', error);
+          throw error;
+        }
+        
+        console.log('Project created:', data);
+        toast('✅ تم إنشاء البروجيكت','success');
+        closeModal();
+        
+        // إعادة تحميل الصفحة بعد فترة قصيرة
+        setTimeout(() => {
+          renderProjects();
+        }, 500);
+      } catch(err) {
+        console.error('Error creating project:', err);
+        toast('❌ ' + err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'إنشاء';
+      }
+    });
+  }
 }
 
 function submitProject(id){
