@@ -643,11 +643,11 @@ async function renderLessons(){
   area.innerHTML='<div class="empty-state"><span class="loader"></span></div>';
   const { data: lessons } = await sb.from('lessons').select('*, profiles(full_name)').order('start_time',{ascending:true});
   const admin=isAdmin();
-  const addBtn=admin?`<button class="btn btn-primary-solid" data-action="add-lesson">+ إضافة</button>`:'';
-  const body=(!lessons||!lessons.length)?`<div class="empty-state"><div class="icon">📚</div><p>لا توجد حصص</p></div>`:`<div class="grid">${lessons.map(l=>lessonCard(l,admin)).join('')}</div>`;
+  const addBtn=admin?`<button class="btn btn-primary-solid" id="addLessonBtn">+ إضافة</button>`:'';
+  const body=(!lessons||!lessons.length)?`<div class="empty-state"><div class="icon">📚</div><p>لا توجد حصص</p></div>`:`<div style="display:flex;flex-direction:column;gap:15px">${lessons.map(l=>lessonCard(l,admin)).join('')}</div>`;
   area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">📚 الحصص</h3>${addBtn}</div>${body}</div>`;
   
-  $$('[data-action="add-lesson"]').forEach(b => b.addEventListener('click', () => openLessonModal()));
+  if(admin) $('#addLessonBtn')?.addEventListener('click', () => openLessonModal());
   $$('[data-action="edit-lesson"]').forEach(b => b.addEventListener('click', () => openLessonModal(parseInt(b.dataset.id))));
   $$('[data-action="delete-lesson"]').forEach(b => b.addEventListener('click', () => deleteLesson(parseInt(b.dataset.id))));
   $$('[data-action="attendance"]').forEach(b => b.addEventListener('click', () => openAttendanceModal(parseInt(b.dataset.id))));
@@ -714,19 +714,190 @@ async function markAttendance(l,st){ await sb.from('attendance').upsert({lesson_
 // ========== MATERIALS ==========
 async function renderMaterials(){
   const area=$('#contentArea'); const admin=isAdmin();
-  const {data:mats}=await sb.from('materials').select('*').order('created_at',{ascending:false});
-  const {data:assigns}=await sb.from('assignments').select('*');
-  const addBtn=admin?`<div class="btn-group"><button class="btn btn-primary-solid" data-action="add-material">+ مادة</button><button class="btn btn-success" data-action="add-assignment">+ واجب</button></div>`:'';
-  const mHTML=(mats&&mats.length)?`<div class="grid">${mats.map(m=>`<div class="item-card"><h3>${escapeHtml(m.title)}</h3><p>${escapeHtml(m.description||'')}</p><div class="btn-group"><a href="${escapeHtml(m.url)}" target="_blank" class="btn btn-primary-solid btn-sm" data-action="view-material" data-id="${m.id}">فتح</a>${admin?`<button class="btn btn-danger btn-sm" data-action="delete-material" data-id="${m.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`:`<div class="empty-state"><div class="icon">📖</div><p>لا توجد مواد</p></div>`;
-  const aHTML=(assigns&&assigns.length)?`<div class="card"><div class="card-header"><h3 class="card-title">📝 الواجبات</h3></div><div class="grid">${assigns.map(a=>`<div class="item-card"><h3>${escapeHtml(a.title)}</h3><p>${escapeHtml(a.description||'')}</p><div class="btn-group"><button class="btn btn-primary-solid btn-sm" data-action="start-assignment" data-id="${a.id}">ابدأ</button>${admin?`<button class="btn btn-danger btn-sm" data-action="delete-assignment" data-id="${a.id}">🗑️</button>`:''}</div></div>`).join('')}</div></div>`:'';
-  area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">📖 التعلم الذاتي</h3>${addBtn}</div>${mHTML}</div>${aHTML}`;
   
-  $$('[data-action="add-material"]').forEach(b => b.addEventListener('click', openMaterialModal));
-  $$('[data-action="add-assignment"]').forEach(b => b.addEventListener('click', openAssignmentModal));
+  // جلب الفولدرات والمواد والواجبات
+  const [foldersRes, materialsRes, assignmentsRes] = await Promise.all([
+    sb.from('folders').select('*').order('order_index', { ascending: true }),
+    sb.from('materials').select('*, folders(name)').order('created_at', { ascending: false }),
+    sb.from('assignments').select('*, materials(title)').order('created_at', { ascending: false })
+  ]);
+  
+  const folders = foldersRes.data || [];
+  const materials = materialsRes.data || [];
+  const assignments = assignmentsRes.data || [];
+  
+  // تنظيم المواد حسب الفولدر
+  const materialsByFolder = {};
+  materials.forEach(m => {
+    const folderId = m.folder_id || 'no-folder';
+    if(!materialsByFolder[folderId]) materialsByFolder[folderId] = [];
+    materialsByFolder[folderId].push(m);
+  });
+  
+  // تنظيم الواجبات حسب المادة
+  const assignmentsByMaterial = {};
+  assignments.forEach(a => {
+    const materialId = a.material_id || 'no-material';
+    if(!assignmentsByMaterial[materialId]) assignmentsByMaterial[materialId] = [];
+    assignmentsByMaterial[materialId].push(a);
+  });
+  
+  // أزرار الإدارة
+  const addBtn = admin ? `
+    <div class="btn-group">
+      <button class="btn btn-primary-solid" id="addFolderBtn">📁 فولدر جديد</button>
+      <button class="btn btn-success" id="addMaterialBtn">+ مادة</button>
+      <button class="btn btn-warning" id="addAssignmentBtn">+ واجب</button>
+    </div>
+  ` : '';
+  
+  // بناء المحتوى
+  let contentHTML = '';
+  
+  // الفولدرات
+  folders.forEach(folder => {
+    const folderMaterials = materialsByFolder[folder.id] || [];
+    
+    contentHTML += `
+      <div class="card" style="margin-bottom:20px;border-right:4px solid var(--primary)">
+        <div class="card-header">
+          <h3 class="card-title">📁 ${escapeHtml(folder.name)}</h3>
+          ${admin ? `
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline" data-action="edit-folder" data-id="${folder.id}">✏️</button>
+              <button class="btn btn-sm btn-danger" data-action="delete-folder" data-id="${folder.id}">🗑️</button>
+            </div>
+          ` : ''}
+        </div>
+        ${folder.description ? `<p style="color:var(--muted);margin-bottom:15px">${escapeHtml(folder.description)}</p>` : ''}
+        
+        ${folderMaterials.length > 0 ? `
+          <div style="display:flex;flex-direction:column;gap:15px">
+            ${folderMaterials.map(m => {
+              const materialAssignments = assignmentsByMaterial[m.id] || [];
+              return `
+                <div class="item-card" style="margin-right:20px;border-right:3px solid var(--accent)">
+                  <h3>${escapeHtml(m.title)}</h3>
+                  <p>${escapeHtml(m.description||'')}</p>
+                  <div class="btn-group" style="margin-bottom:10px">
+                    <a href="${escapeHtml(m.url)}" target="_blank" class="btn btn-primary-solid btn-sm" data-action="view-material" data-id="${m.id}">📖 فتح المادة</a>
+                    ${admin ? `
+                      <button class="btn btn-sm btn-outline" data-action="edit-material" data-id="${m.id}">✏️</button>
+                      <button class="btn btn-sm btn-danger" data-action="delete-material" data-id="${m.id}">🗑️</button>
+                    ` : ''}
+                  </div>
+                  
+                  ${materialAssignments.length > 0 ? `
+                    <div style="margin-top:15px;padding-top:15px;border-top:1px solid var(--border)">
+                      <h4 style="font-size:14px;margin-bottom:10px;color:var(--accent)">📝 الواجبات المرتبطة:</h4>
+                      <div style="display:flex;flex-direction:column;gap:10px">
+                        ${materialAssignments.map(a => `
+                          <div style="background:rgba(255,255,255,.02);padding:12px;border-radius:8px;border:1px solid var(--border)">
+                            <div style="font-weight:700;margin-bottom:6px">${escapeHtml(a.title)}</div>
+                            ${a.description ? `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${escapeHtml(a.description)}</div>` : ''}
+                            <div class="btn-group">
+                              <button class="btn btn-primary-solid btn-sm" data-action="start-assignment" data-id="${a.id}">ابدأ الواجب</button>
+                              ${admin ? `<button class="btn btn-sm btn-outline" data-action="edit-assignment" data-id="${a.id}">✏️</button><button class="btn btn-sm btn-danger" data-action="delete-assignment" data-id="${a.id}">🗑️</button>` : ''}
+                            </div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : `<div class="empty-state" style="padding:20px"><p style="font-size:13px">لا توجد مواد في هذا الفولدر</p></div>`}
+      </div>
+    `;
+  });
+  
+  // المواد بدون فولدر
+  const noFolderMaterials = materialsByFolder['no-folder'] || [];
+  if(noFolderMaterials.length > 0){
+    contentHTML += `
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">📂 مواد عامة (بدون فولدر)</h3></div>
+        <div style="display:flex;flex-direction:column;gap:15px">
+          ${noFolderMaterials.map(m => `
+            <div class="item-card">
+              <h3>${escapeHtml(m.title)}</h3>
+              <p>${escapeHtml(m.description||'')}</p>
+              <div class="btn-group">
+                <a href="${escapeHtml(m.url)}" target="_blank" class="btn btn-primary-solid btn-sm" data-action="view-material" data-id="${m.id}">📖 فتح</a>
+                ${admin ? `<button class="btn btn-sm btn-outline" data-action="edit-material" data-id="${m.id}">✏️</button><button class="btn btn-sm btn-danger" data-action="delete-material" data-id="${m.id}">🗑️</button>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  if(folders.length === 0 && noFolderMaterials.length === 0){
+    contentHTML = `<div class="empty-state"><div class="icon">📖</div><p>لا توجد مواد بعد</p></div>`;
+  }
+  
+  area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📖 التعلم الذاتي</h3>${addBtn}</div></div>${contentHTML}`;
+  
+  // Event listeners
+  if(admin){
+    $('#addFolderBtn')?.addEventListener('click', openFolderModal);
+    $('#addMaterialBtn')?.addEventListener('click', () => openMaterialModal(null));
+    $('#addAssignmentBtn')?.addEventListener('click', () => openAssignmentModal(null));
+    $$('[data-action="edit-folder"]').forEach(b => b.addEventListener('click', () => openFolderModal(parseInt(b.dataset.id))));
+    $$('[data-action="delete-folder"]').forEach(b => b.addEventListener('click', () => deleteFolder(parseInt(b.dataset.id))));
+    $$('[data-action="edit-material"]').forEach(b => b.addEventListener('click', () => openMaterialModal(parseInt(b.dataset.id))));
+    $$('[data-action="edit-assignment"]').forEach(b => b.addEventListener('click', () => openAssignmentModal(parseInt(b.dataset.id))));
+  }
   $$('[data-action="view-material"]').forEach(b => b.addEventListener('click', () => trackMaterialView(parseInt(b.dataset.id))));
   $$('[data-action="delete-material"]').forEach(b => b.addEventListener('click', () => deleteMaterial(parseInt(b.dataset.id))));
   $$('[data-action="start-assignment"]').forEach(b => b.addEventListener('click', () => startAssignment(parseInt(b.dataset.id))));
   $$('[data-action="delete-assignment"]').forEach(b => b.addEventListener('click', () => deleteAssignment(parseInt(b.dataset.id))));
+}
+
+// ========== FOLDERS ==========
+function openFolderModal(id = null){
+  (async () => {
+    let folder = { name: '', description: '', order_index: 0 };
+    if(id){
+      const { data } = await sb.from('folders').select('*').eq('id', id).single();
+      if(data) folder = data;
+    }
+    
+    openModal(`<h2>${id ? 'تعديل' : 'إضافة'} فولدر</h2><form id="folderForm">
+      <div class="input-group"><label>اسم الفولدر</label><input type="text" id="folderName" value="${escapeHtml(folder.name)}" required/></div>
+      <div class="input-group"><label>الوصف (اختياري)</label><textarea id="folderDesc" rows="3">${escapeHtml(folder.description || '')}</textarea></div>
+      <div class="input-group"><label>ترتيب العرض</label><input type="number" id="folderOrder" value="${folder.order_index || 0}" min="0"/></div>
+      <button type="submit" class="btn-primary">حفظ</button></form>`);
+    
+    $('#folderForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const payload = {
+        name: $('#folderName').value.trim(),
+        description: $('#folderDesc').value.trim(),
+        order_index: parseInt($('#folderOrder').value) || 0,
+        created_by: currentProfile.id
+      };
+      
+      const { error } = id 
+        ? await sb.from('folders').update(payload).eq('id', id)
+        : await sb.from('folders').insert(payload);
+      
+      if(error){ toast('❌ ' + error.message, 'error'); return; }
+      toast('✅ تم', 'success');
+      closeModal();
+      renderMaterials();
+    });
+  })();
+}
+
+async function deleteFolder(id){
+  if(!confirm('حذف الفولدر؟ (المواد مش هتتمسح)')) return;
+  await sb.from('folders').delete().eq('id', id);
+  toast('🗑️ تم', 'success');
+  renderMaterials();
 }
 
 async function trackMaterialView(materialId){
@@ -784,38 +955,90 @@ async function trackMaterialView(materialId){
   }
 }
 
-function openMaterialModal(){
-  openModal(`<h2>📖 إضافة مادة</h2><form id="materialForm">
-    <div class="input-group"><label>العنوان</label><input type="text" id="matTitle" required/></div>
-    <div class="input-group"><label>الوصف</label><textarea id="matDesc" rows="2"></textarea></div>
-    <div class="input-group"><label>النوع</label><select id="matType"><option value="link">رابط</option><option value="file">ملف</option></select></div>
-    <div class="input-group" id="matUrlGroup"><label>الرابط</label><input type="url" id="matUrl" placeholder="https://..."/></div>
-    <div class="input-group" id="matFileGroup" style="display:none"><label>الملف</label><input type="file" id="matFile"/></div>
-    <button type="submit" class="btn-primary" id="matSubmitBtn">رفع</button></form>`);
-  $('#matType').addEventListener('change', () => {
-    const isFile = $('#matType').value === 'file';
-    $('#matUrlGroup').style.display = isFile ? 'none' : 'block';
-    $('#matFileGroup').style.display = isFile ? 'block' : 'none';
-  });
-  $('#materialForm').addEventListener('submit', async e=>{
-    e.preventDefault();
-    const btn=$('#matSubmitBtn'); btn.disabled=true; btn.innerHTML='<span class="loader"></span>';
-    try {
-      let finalUrl = $('#matUrl').value.trim();
-      const type = $('#matType').value;
-      if(type === 'file' && $('#matFile').files[0]) {
-        const file = $('#matFile').files[0];
-        const fileName = `${Date.now()}_${file.name}`;
-        const { error: uploadError } = await sb.storage.from('materials').upload(fileName, file);
-        if(uploadError) throw uploadError;
-        const { data: { publicUrl } } = sb.storage.from('materials').getPublicUrl(fileName);
-        finalUrl = publicUrl;
+function openMaterialModal(id = null){
+  (async () => {
+    const { data: folders } = await sb.from('folders').select('*').order('order_index');
+    let material = { title: '', description: '', type: 'link', url: '', folder_id: null };
+    
+    if(id){
+      const { data } = await sb.from('materials').select('*').eq('id', id).single();
+      if(data) material = data;
+    }
+    
+    openModal(`<h2>${id ? 'تعديل' : 'إضافة'} مادة</h2><form id="materialForm">
+      <div class="input-group"><label>الفولدر</label>
+        <select id="matFolder">
+          <option value="">-- بدون فولدر --</option>
+          ${(folders || []).map(f => `<option value="${f.id}" ${material.folder_id == f.id ? 'selected' : ''}>${escapeHtml(f.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="input-group"><label>العنوان</label><input type="text" id="matTitle" value="${escapeHtml(material.title)}" required/></div>
+      <div class="input-group"><label>الوصف</label><textarea id="matDesc" rows="2">${escapeHtml(material.description || '')}</textarea></div>
+      <div class="input-group"><label>النوع</label>
+        <select id="matType">
+          <option value="link" ${material.type === 'link' ? 'selected' : ''}>رابط</option>
+          <option value="file" ${material.type === 'file' ? 'selected' : ''}>ملف</option>
+        </select>
+      </div>
+      <div class="input-group" id="matUrlGroup" style="display:${material.type === 'file' ? 'none' : 'block'}">
+        <label>الرابط</label><input type="url" id="matUrl" value="${escapeHtml(material.url || '')}" placeholder="https://..."/>
+      </div>
+      <div class="input-group" id="matFileGroup" style="display:${material.type === 'file' ? 'block' : 'none'}">
+        <label>الملف</label><input type="file" id="matFile"/>
+      </div>
+      <button type="submit" class="btn-primary" id="matSubmitBtn">رفع</button></form>`);
+    
+    $('#matType').addEventListener('change', () => {
+      const isFile = $('#matType').value === 'file';
+      $('#matUrlGroup').style.display = isFile ? 'none' : 'block';
+      $('#matFileGroup').style.display = isFile ? 'block' : 'none';
+    });
+    
+    $('#materialForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = $('#matSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span>';
+      
+      try {
+        let finalUrl = $('#matUrl').value.trim();
+        const type = $('#matType').value;
+        
+        if(type === 'file' && $('#matFile').files[0]){
+          const file = $('#matFile').files[0];
+          const fileName = `${Date.now()}_${file.name}`;
+          const { error: uploadError } = await sb.storage.from('materials').upload(fileName, file);
+          if(uploadError) throw uploadError;
+          const { data: { publicUrl } } = sb.storage.from('materials').getPublicUrl(fileName);
+          finalUrl = publicUrl;
+        }
+        
+        const payload = {
+          title: $('#matTitle').value.trim(),
+          description: $('#matDesc').value.trim(),
+          type: type,
+          url: finalUrl,
+          folder_id: $('#matFolder').value ? parseInt($('#matFolder').value) : null,
+          uploaded_by: currentProfile.id
+        };
+        
+        const { error } = id 
+          ? await sb.from('materials').update(payload).eq('id', id)
+          : await sb.from('materials').insert(payload);
+        
+        if(error) throw error;
+        
+        toast('✅ تم', 'success');
+        closeModal();
+        renderMaterials();
+      } catch(err) {
+        toast('❌ ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'رفع';
       }
-      await sb.from('materials').insert({title:$('#matTitle').value.trim(),description:$('#matDesc').value.trim(),type:type,url:finalUrl,uploaded_by:currentProfile.id});
-      toast('✅','success'); closeModal(); renderMaterials();
-    } catch(err) { toast('❌ '+err.message,'error'); }
-    finally { btn.disabled=false; btn.innerHTML='رفع'; }
-  });
+    });
+  })();
 }
 
 async function deleteMaterial(id){ if(!confirm('حذف؟'))return; await sb.from('materials').delete().eq('id',id); toast('🗑️','success'); renderMaterials(); }
@@ -823,22 +1046,58 @@ async function deleteMaterial(id){ if(!confirm('حذف؟'))return; await sb.from
 // ========== ASSIGNMENTS ==========
 let currentQuestions = [];
 
-function openAssignmentModal(){
-  currentQuestions = [];
-  openModal(`<h2>📝 إنشاء واجب</h2><form id="assignForm">
-    <div class="input-group"><label>العنوان</label><input type="text" id="assignTitle" required/></div>
-    <div class="input-group"><label>الوصف</label><textarea id="assignDesc" rows="2"></textarea></div>
-    <div id="questionsContainer"></div>
-    <button type="button" class="btn btn-outline" style="width:100%; margin-bottom:15px" data-action="add-question">+ إضافة سؤال</button>
-    <button type="submit" class="btn-primary">حفظ</button></form>`);
-  renderQuestionsUI();
-  $('[data-action="add-question"]').addEventListener('click', () => { currentQuestions.push({ q: '', type: 'mc', options: ['','','',''], correct: 0, explanation: '' }); renderQuestionsUI(); });
-  $('#assignForm').addEventListener('submit', async e=>{
-    e.preventDefault();
-    if(currentQuestions.length === 0) { toast('⚠️ أضف سؤالاً','warning'); return; }
-    await sb.from('assignments').insert({title:$('#assignTitle').value.trim(),description:$('#assignDesc').value.trim(),questions:currentQuestions});
-    toast('✅','success'); closeModal(); renderMaterials();
-  });
+function openAssignmentModal(id = null){
+  (async () => {
+    const { data: materials } = await sb.from('materials').select('*').order('created_at', { ascending: false });
+    let assignment = { title: '', description: '', material_id: null, questions: [] };
+    
+    if(id){
+      const { data } = await sb.from('assignments').select('*').eq('id', id).single();
+      if(data) assignment = data;
+    }
+    
+    currentQuestions = assignment.questions || [];
+    
+    openModal(`<h2>${id ? 'تعديل' : 'إضافة'} واجب</h2><form id="assignForm">
+      <div class="input-group"><label>المادة المرتبطة</label>
+        <select id="assignMaterial" required>
+          <option value="">-- اختر مادة --</option>
+          ${(materials || []).map(m => `<option value="${m.id}" ${assignment.material_id == m.id ? 'selected' : ''}>${escapeHtml(m.title)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="input-group"><label>عنوان الواجب</label><input type="text" id="assignTitle" value="${escapeHtml(assignment.title)}" required/></div>
+      <div class="input-group"><label>الوصف</label><textarea id="assignDesc" rows="2">${escapeHtml(assignment.description || '')}</textarea></div>
+      <div id="questionsContainer"></div>
+      <button type="button" class="btn btn-outline" style="width:100%; margin-bottom:15px" data-action="add-question">+ إضافة سؤال</button>
+      <button type="submit" class="btn-primary">حفظ</button></form>`);
+    
+    renderQuestionsUI();
+    $('[data-action="add-question"]').addEventListener('click', () => {
+      currentQuestions.push({ q: '', type: 'mc', options: ['','','',''], correct: 0, explanation: '' });
+      renderQuestionsUI();
+    });
+    
+    $('#assignForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      if(currentQuestions.length === 0){ toast('⚠️ أضف سؤالاً', 'warning'); return; }
+      
+      const payload = {
+        title: $('#assignTitle').value.trim(),
+        description: $('#assignDesc').value.trim(),
+        material_id: $('#assignMaterial').value ? parseInt($('#assignMaterial').value) : null,
+        questions: currentQuestions
+      };
+      
+      const { error } = id 
+        ? await sb.from('assignments').update(payload).eq('id', id)
+        : await sb.from('assignments').insert(payload);
+      
+      if(error){ toast('❌ ' + error.message, 'error'); return; }
+      toast('✅ تم', 'success');
+      closeModal();
+      renderMaterials();
+    });
+  })();
 }
 
 function renderQuestionsUI(){
@@ -908,11 +1167,11 @@ async function deleteAssignment(id){ if(!confirm('حذف؟'))return; await sb.fr
 async function renderExams(){
   const area=$('#contentArea'); const admin=isAdmin();
   const {data:exams}=await sb.from('exams').select('*').order('id',{ascending:false});
-  const addBtn=admin?`<button class="btn btn-primary-solid" data-action="add-exam">+ امتحان</button>`:'';
-  const body=(!exams||!exams.length)?`<div class="empty-state"><div class="icon">📝</div><p>لا توجد امتحانات</p></div>`:`<div class="grid">${exams.map(e=>`<div class="item-card"><h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.description||'')}</p><div class="item-meta"><span class="badge badge-info">⏱️ ${e.duration_minutes||30} دقيقة</span></div><div class="btn-group"><button class="btn btn-primary-solid btn-sm" data-action="start-exam" data-id="${e.id}">ابدأ</button>${admin?`<button class="btn btn-danger btn-sm" data-action="delete-exam" data-id="${e.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`;
+  const addBtn=admin?`<button class="btn btn-primary-solid" id="addExamBtn">+ امتحان</button>`:'';
+  const body=(!exams||!exams.length)?`<div class="empty-state"><div class="icon">📝</div><p>لا توجد امتحانات</p></div>`:`<div style="display:flex;flex-direction:column;gap:15px">${exams.map(e=>`<div class="item-card"><h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.description||'')}</p><div class="item-meta"><span class="badge badge-info">⏱️ ${e.duration_minutes||30} دقيقة</span></div><div class="btn-group"><button class="btn btn-primary-solid btn-sm" data-action="start-exam" data-id="${e.id}">ابدأ</button>${admin?`<button class="btn btn-danger btn-sm" data-action="delete-exam" data-id="${e.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`;
   area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">📝 الامتحانات</h3>${addBtn}</div>${body}</div>`;
   
-  $$('[data-action="add-exam"]').forEach(b => b.addEventListener('click', openExamModal));
+  if(admin) $('#addExamBtn')?.addEventListener('click', openExamModal);
   $$('[data-action="start-exam"]').forEach(b => b.addEventListener('click', () => startExam(parseInt(b.dataset.id))));
   $$('[data-action="delete-exam"]').forEach(b => b.addEventListener('click', () => deleteExam(parseInt(b.dataset.id))));
 }
@@ -1023,12 +1282,10 @@ async function renderProjects(){
   const area=$('#contentArea'); const admin=isAdmin();
   const {data:projs}=await sb.from('projects').select('*').order('created_at',{ascending:false});
   const addBtn=admin?`<button class="btn btn-primary-solid" id="addProjectBtn">+ بروجيكت</button>`:'';
-  const body=(!projs||!projs.length)?`<div class="empty-state"><div class="icon">🎯</div><p>لا توجد بروجيكتات</p></div>`:`<div class="grid">${projs.map(p=>`<div class="item-card"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.description||'')}</p>${p.deadline?`<div class="item-meta"><span class="badge badge-warning">⏰ ${formatDate(p.deadline)}</span></div>`:''}<div class="btn-group"><button class="btn btn-primary-solid btn-sm submit-project-btn" data-id="${p.id}">📤 تسليم</button>${admin?`<button class="btn btn-outline btn-sm view-subs-btn" data-id="${p.id}">👁️ التسليمات</button><button class="btn btn-danger btn-sm delete-project-btn" data-id="${p.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`;
+  const body=(!projs||!projs.length)?`<div class="empty-state"><div class="icon">🎯</div><p>لا توجد بروجيكتات</p></div>`:`<div style="display:flex;flex-direction:column;gap:15px">${projs.map(p=>`<div class="item-card"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.description||'')}</p>${p.deadline?`<div class="item-meta"><span class="badge badge-warning">⏰ ${formatDate(p.deadline)}</span></div>`:''}<div class="btn-group"><button class="btn btn-primary-solid btn-sm submit-project-btn" data-id="${p.id}">📤 تسليم</button>${admin?`<button class="btn btn-outline btn-sm view-subs-btn" data-id="${p.id}">👁️ التسليمات</button><button class="btn btn-danger btn-sm delete-project-btn" data-id="${p.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`;
   area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">🎯 البروجيكت</h3>${addBtn}</div>${body}</div>`;
   
-  if(admin){
-    $('#addProjectBtn').addEventListener('click', openProjectModal);
-  }
+  if(admin) $('#addProjectBtn')?.addEventListener('click', openProjectModal);
   $$('.submit-project-btn').forEach(b => b.addEventListener('click', () => submitProject(parseInt(b.dataset.id))));
   $$('.view-subs-btn').forEach(b => b.addEventListener('click', () => viewProjectSubmissions(parseInt(b.dataset.id))));
   $$('.delete-project-btn').forEach(b => b.addEventListener('click', () => deleteProject(parseInt(b.dataset.id))));
