@@ -148,8 +148,6 @@
     th { background: rgba(255,255,255,.04); font-weight: 800; color: #aab2c8; font-size: 12px; white-space: nowrap; }
     .dynamic-q-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--border); }
     .remove-q-btn { background: rgba(248,113,113,0.2); color: #fca5a5; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-top: 10px; }
-    
-    /* Badges Grid - Improved */
     .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
     .badge-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--r); text-align: center; transition: .3s; position: relative; overflow: hidden; }
     .badge-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(139,92,246,.1) 0%, transparent 70%); opacity: 0; transition: .3s; }
@@ -160,12 +158,8 @@
     .badge-name { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
     .badge-points { font-size: 12px; color: var(--muted); }
     .badge-qty { background: var(--grad); color: #fff; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 900; display: inline-block; margin-top: 8px; box-shadow: 0 2px 8px rgba(139,92,246,.3); }
-    
-    /* Footer */
     .footer { text-align: center; padding: 20px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 40px; }
-    .footer a { color: var(--accent); text-decoration: none; }
     
-    /* Responsive */
     @media (max-width: 900px) {
       .sidebar { transform: translateX(100%); }
       .sidebar.open { transform: translateX(0); }
@@ -180,13 +174,21 @@
       .stats-grid, .grid, .badges-grid { grid-template-columns: 1fr; }
       .btn-group { flex-direction: column; }
       .btn-group .btn { width: 100%; }
-      .modal-content { width: 95%; max-height: 95vh; }
+      .modal-content { width: 95%; max-height: 95vh; border-radius: 16px; }
       .modal-body { padding: 20px 16px; }
-      .topbar { padding: 12px 16px; }
+      .modal-body h2 { font-size: 16px; }
+      .topbar { padding: 12px 16px; gap: 10px; }
       .page-title { font-size: 16px; }
       .points-badge { padding: 6px 12px; font-size: 13px; }
-      table { min-width: 500px; font-size: 12px; }
-      th, td { padding: 10px 8px; }
+      .table-wrapper { margin: -10px; border-radius: 0; border-left: none; border-right: none; }
+      table { min-width: 100%; font-size: 11px; }
+      th, td { padding: 8px 6px; font-size: 11px; }
+      th { font-size: 10px; }
+      td .btn-group { flex-direction: column; gap: 4px; }
+      td .btn { padding: 4px 8px; font-size: 10px; min-height: 28px; width: 100%; }
+      .input-group { margin-bottom: 12px; }
+      .input-group label { font-size: 12px; }
+      .input-group input, .input-group select, .input-group textarea { font-size: 14px; padding: 10px 12px; min-height: 44px; }
     }
   </style>
 </head>
@@ -360,15 +362,18 @@
       buildSidebar();
       navigate('dashboard');
       
-      // فحص لو الحساب على باسورد افتراضي
       setTimeout(() => {
+        console.log('Checking must_change_password:', currentProfile.must_change_password);
         if(currentProfile.must_change_password === true){
+          console.log('Showing password change warning');
           showPasswordChangeWarning();
         }
-      }, 500);
+      }, 1000);
     }
 
     function showPasswordChangeWarning(){
+      console.log('showPasswordChangeWarning called');
+      
       openModal(`
         <h2 style="color:var(--warning);text-align:center">⚠️ تنبيه أمني</h2>
         <div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);padding:16px;border-radius:10px;margin-bottom:20px">
