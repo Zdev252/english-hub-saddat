@@ -326,6 +326,7 @@ function buildSidebar(){
     {id:'announcements',icon:'📢',label:'إدارة الإعلانات',roles:['admin']},
     {id:'badges',icon:'🎖️',label:'إدارة الأوسمة',roles:['admin']},
     {id:'lessons',icon:'📚',label:'الحصص',roles:['student','admin']},
+    {id:'attendance',icon:'📋',label:'الحضور والغياب',roles:['admin']},
     {id:'materials',icon:'📖',label:'التعلم الذاتي',roles:['student','admin']},
     {id:'exams',icon:'📝',label:'الامتحانات',roles:['student','admin']},
     {id:'examResults',icon:'📊',label:'نتائج الامتحانات',roles:['admin']},
@@ -350,10 +351,23 @@ $('#overlay').addEventListener('click', closeSidebar);
 
 function navigate(page){
   $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
-  const titles={dashboard:'الرئيسية',announcements:'إدارة الإعلانات',badges:'إدارة الأوسمة',lessons:'الحصص',materials:'التعلم الذاتي',exams:'الامتحانات',examResults:'نتائج الامتحانات',assignmentResults:'نتائج الواجبات',projects:'البروجيكت',support:'الدعم الفني',admin:'لوحة التحكم'};
+  const titles={
+    dashboard:'الرئيسية',
+    announcements:'إدارة الإعلانات',
+    badges:'إدارة الأوسمة',
+    lessons:'الحصص',
+    attendance:'الحضور والغياب',
+    materials:'التعلم الذاتي',
+    exams:'الامتحانات',
+    examResults:'نتائج الامتحانات',
+    assignmentResults:'نتائج الواجبات',
+    projects:'البروجيكت',
+    support:'الدعم الفني',
+    admin:'لوحة التحكم'
+  };
   $('#pageTitle').textContent=titles[page]||'';
   closeSidebar();
-  const R={dashboard:renderDashboard,announcements:renderAnnouncements,badges:renderBadges,lessons:renderLessons,materials:renderMaterials,exams:renderExams,examResults:renderExamResults,assignmentResults:renderAssignmentResults,projects:renderProjects,support:renderSupport,admin:renderAdmin};
+  const R={ dashboard:renderDashboard, announcements:renderAnnouncements, badges:renderBadges, lessons:renderLessons, attendance:renderAttendancePage, materials:renderMaterials, exams:renderExams, examResults:renderExamResults, assignmentResults:renderAssignmentResults, projects:renderProjects, support:renderSupport, admin:renderAdmin };
   if(R[page]) R[page]();
 }
 window.navigate = navigate;
@@ -501,6 +515,7 @@ async function renderBadges(){
       <div class="badge-points">⭐ ${b.points || 0} نقطة</div>
       ${b.description ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4">${escapeHtml(b.description)}</div>` : ''}
       <div class="btn-group" style="margin-top:12px;justify-content:center">
+        <button class="btn btn-outline btn-sm" data-action="edit-badge" data-id="${b.id}">✏️ تعديل</button>
         <button class="btn btn-success btn-sm" data-action="award-badge" data-id="${b.id}" data-name="${escapeHtml(b.name)}" data-points="${b.points || 0}">🎁 منح</button>
         <button class="btn btn-danger btn-sm" data-action="delete-badge" data-id="${b.id}" data-name="${escapeHtml(b.name)}">🗑️ حذف</button>
       </div>
@@ -524,6 +539,7 @@ async function renderBadges(){
   $$('[data-action="create-badge"]').forEach(b => b.addEventListener('click', showCreateBadgeModal));
   $$('[data-action="award-badge"]').forEach(b => b.addEventListener('click', () => showAwardModal(parseInt(b.dataset.id), b.dataset.name, parseInt(b.dataset.points))));
   $$('[data-action="delete-badge"]').forEach(b => b.addEventListener('click', () => confirmDeleteBadge(parseInt(b.dataset.id), b.dataset.name)));
+  $$('[data-action="edit-badge"]').forEach(b => b.addEventListener('click', () => editBadge(parseInt(b.dataset.id))));
 }
 
 function showCreateBadgeModal(){
@@ -543,6 +559,47 @@ function showCreateBadgeModal(){
     });
     if(error){ toast('❌ ' + error.message, 'error'); return; }
     toast('✅ تم الإنشاء', 'success');
+    closeModal();
+    renderBadges();
+  });
+}
+
+async function editBadge(badgeId){
+  const { data: badge, error } = await sb.from('badges').select('*').eq('id', badgeId).single();
+  if(error || !badge){ toast('❌ لم يتم العثور على الوسام', 'error'); return; }
+  
+  openModal(`<h2>✏️ تعديل الوسام</h2><form id="editBadgeForm">
+    <div class="input-group"><label>اسم الوسام</label><input type="text" id="editBadgeName" value="${escapeHtml(badge.name)}" required/></div>
+    <div class="input-group"><label>الأيقونة (Emoji)</label><input type="text" id="editBadgeIcon" value="${escapeHtml(badge.icon || '🏅')}" style="font-size:24px;text-align:center"/></div>
+    <div class="input-group"><label>عدد النقاط</label><input type="number" id="editBadgePoints" value="${badge.points || 0}" min="0" max="1000" required style="font-size:18px;text-align:center"/></div>
+    <div class="input-group"><label>الوصف (اختياري)</label><textarea id="editBadgeDesc" rows="3">${escapeHtml(badge.description || '')}</textarea></div>
+    <button type="submit" class="btn-primary">💾 حفظ التعديلات</button></form>`);
+  
+  $('#editBadgeForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    
+    const { error } = await sb.from('badges').update({
+      name: $('#editBadgeName').value.trim(),
+      icon: $('#editBadgeIcon').value.trim() || '🏅',
+      points: parseInt($('#editBadgePoints').value) || 0,
+      description: $('#editBadgeDesc').value.trim()
+    }).eq('id', badgeId);
+    
+    if(error){ toast('❌ ' + error.message, 'error'); return; }
+    
+    // إعادة حساب نقاط كل الطلاب اللي عندهم الوسام ده
+    const { data: affectedUsers } = await sb.from('user_badges')
+      .select('user_id')
+      .eq('badge_id', badgeId);
+    
+    if(affectedUsers && affectedUsers.length > 0){
+      const uniqueUsers = [...new Set(affectedUsers.map(u => u.user_id))];
+      for(const userId of uniqueUsers){
+        await recalculatePoints(userId);
+      }
+    }
+    
+    toast('✅ تم التعديل', 'success');
     closeModal();
     renderBadges();
   });
@@ -628,31 +685,67 @@ async function renderLessons(){
   const { data: lessons } = await sb.from('lessons').select('*, profiles(full_name)').order('start_time',{ascending:true});
   const admin=isAdmin();
   const addBtn=admin?`<button class="btn btn-primary-solid" id="addLessonBtn">+ إضافة</button>`:'';
-  const body=(!lessons||!lessons.length)?`<div class="empty-state"><div class="icon">📚</div><p>لا توجد حصص</p></div>`:`<div style="display:flex;flex-direction:column;gap:15px">${lessons.map(l=>lessonCard(l,admin)).join('')}</div>`;
+  
+  let body;
+  if(!lessons||!lessons.length){
+    body=`<div class="empty-state"><div class="icon">📚</div><p>لا توجد حصص</p></div>`;
+  } else {
+    // نستخدم Promise.all عشان ننتظر كل lessonCard
+    const cards = await Promise.all(lessons.map(l => lessonCard(l, admin)));
+    body=`<div style="display:flex;flex-direction:column;gap:15px">${cards.join('')}</div>`;
+  }
+  
   area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">📚 الحصص</h3>${addBtn}</div>${body}</div>`;
   
   if(admin) $('#addLessonBtn')?.addEventListener('click', () => openLessonModal());
   $$('[data-action="edit-lesson"]').forEach(b => b.addEventListener('click', () => openLessonModal(parseInt(b.dataset.id))));
   $$('[data-action="delete-lesson"]').forEach(b => b.addEventListener('click', () => deleteLesson(parseInt(b.dataset.id))));
-  $$('[data-action="attendance"]').forEach(b => b.addEventListener('click', () => openAttendanceModal(parseInt(b.dataset.id))));
-  $$('[data-action="mark-present"]').forEach(b => b.addEventListener('click', () => markAttendance(parseInt(b.dataset.id),'present')));
-  $$('[data-action="mark-absent"]').forEach(b => b.addEventListener('click', () => markAttendance(parseInt(b.dataset.id),'absent')));
 }
 
-function lessonCard(l,admin){
+async function lessonCard(l,admin){
   const now = new Date();
   const start = l.start_time ? new Date(l.start_time) : null;
   const end = l.end_time ? new Date(l.end_time) : null;
-  let statusClass = 'badge-info', statusText = 'قادمة';
-  if(start && now >= start && (!end || now <= end)){ statusClass = 'badge-danger'; statusText = 'مباشر 🔴'; }
-  else if(end && now > end){ statusClass = 'badge-success'; statusText = 'انتهت'; }
+  let status = 'upcoming', statusClass = 'badge-info', statusText = 'قادمة';
+  if(start && now >= start && (!end || now <= end)){ status = 'live'; statusClass = 'badge-danger'; statusText = 'مباشر 🔴'; }
+  else if(end && now > end){ status = 'completed'; statusClass = 'badge-success'; statusText = 'انتهت'; }
+  
+  // جلب حالة حضور الطالب لو الحصة انتهت
+  let studentAttendanceHTML = '';
+  if(!admin && status === 'completed'){
+    const { data: att } = await sb.from('attendance')
+      .select('status')
+      .eq('lesson_id', l.id)
+      .eq('user_id', currentProfile.id)
+      .maybeSingle();
+    
+    if(att){
+      const statusMap = {
+        present: { text: '✅ حاضر', class: 'badge-success' },
+        absent: { text: '❌ غائب', class: 'badge-danger' }
+      };
+      const s = statusMap[att.status] || statusMap.absent;
+      studentAttendanceHTML = `<div class="item-meta"><span class="badge ${s.class}" style="font-size:12px;padding:6px 12px">حالتك: ${s.text}</span></div>`;
+    }
+  }
+  
+  // زر الدخول يظهر فقط لو الحصة مباشرة
+  const joinBtn = (status === 'live' && l.lesson_link) 
+    ? `<a href="${escapeHtml(l.lesson_link)}" target="_blank" class="btn btn-success btn-sm" style="margin-bottom:10px; width:100%">🔗 دخول الحصة الآن</a>`
+    : (status === 'upcoming' && l.lesson_link 
+        ? `<div class="btn btn-outline btn-sm" style="margin-bottom:10px; width:100%; opacity:.5; cursor:not-allowed">🔒 الحصة لم تبدأ بعد</div>`
+        : (status === 'completed' && l.lesson_link
+            ? `<div class="btn btn-outline btn-sm" style="margin-bottom:10px; width:100%; opacity:.5; cursor:not-allowed">🔒 الحصة انتهت</div>`
+            : ''));
+  
   return `<div class="item-card"><div class="item-card-header"><span class="badge ${statusClass}">${statusText}</span></div>
     <h3>${escapeHtml(l.title)}</h3><p>${escapeHtml(l.description||'')}</p>
     <div class="item-meta"><span class="badge badge-info">🕐 ${l.start_time?formatDate(l.start_time):'غير محدد'}</span></div>
-    ${l.lesson_link ? `<a href="${escapeHtml(l.lesson_link)}" target="_blank" class="btn btn-success btn-sm" style="margin-bottom:10px; width:100%">🔗 دخول الحصة</a>` : ''}
+    ${joinBtn}
+    ${studentAttendanceHTML}
     <div class="btn-group">${admin
-      ?`<button class="btn btn-sm btn-outline" data-action="attendance" data-id="${l.id}">📋</button><button class="btn btn-sm btn-warning" data-action="edit-lesson" data-id="${l.id}">✏️</button><button class="btn btn-sm btn-danger" data-action="delete-lesson" data-id="${l.id}">🗑️</button>`
-      :`<button class="btn btn-sm btn-success" data-action="mark-present" data-id="${l.id}">✅</button><button class="btn btn-sm btn-danger" data-action="mark-absent" data-id="${l.id}">❌</button>`}</div></div>`;
+      ?`<button class="btn btn-sm btn-warning" data-action="edit-lesson" data-id="${l.id}">✏️</button><button class="btn btn-sm btn-danger" data-action="delete-lesson" data-id="${l.id}">🗑️</button>`
+      :''}</div></div>`;
 }
 
 function openLessonModal(id=null){
@@ -694,6 +787,170 @@ function openAttendanceModal(lessonId){
 }
 
 async function markAttendance(l,st){ await sb.from('attendance').upsert({lesson_id:l,user_id:currentProfile.id,status:st},{onConflict:'user_id,lesson_id'}); toast('✅','success'); }
+
+async function renderAttendancePage(){
+  const area = $('#contentArea');
+  if(!isAdmin()){ area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
+  
+  area.innerHTML = '<div class="empty-state"><span class="loader"></span></div>';
+  
+  // جلب الحصص والطلاب
+  const [lessonsRes, studentsRes] = await Promise.all([
+    sb.from('lessons').select('*').order('start_time', { ascending: false }),
+    sb.from('profiles').select('*').eq('role', 'student').order('full_name')
+  ]);
+  
+  const lessons = lessonsRes.data || [];
+  const students = studentsRes.data || [];
+  
+  if(lessons.length === 0){
+    area.innerHTML = `<div class="card"><div class="empty-state"><div class="icon">📚</div><p>لا توجد حصص بعد</p></div></div>`;
+    return;
+  }
+  
+  area.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">📋 الحضور والغياب</h3>
+      </div>
+      <div class="input-group">
+        <label>اختر الحصة</label>
+        <select id="attendanceLessonSelect">
+          <option value="">-- اختر حصة --</option>
+          ${lessons.map(l => {
+            const date = l.start_time ? formatDate(l.start_time) : 'بدون تاريخ';
+            return `<option value="${l.id}">${escapeHtml(l.title)} - ${date}</option>`;
+          }).join('')}
+        </select>
+      </div>
+      <div id="attendanceContent"></div>
+    </div>
+  `;
+  
+  $('#attendanceLessonSelect').addEventListener('change', async (e) => {
+    const lessonId = e.target.value;
+    if(!lessonId){
+      $('#attendanceContent').innerHTML = '';
+      return;
+    }
+    
+    await loadAttendanceForLesson(lessonId, students);
+  });
+}
+
+async function loadAttendanceForLesson(lessonId, students){
+  const { data: existingAttendance } = await sb.from('attendance')
+    .select('*')
+    .eq('lesson_id', lessonId);
+  
+  const attendanceMap = {};
+  (existingAttendance || []).forEach(a => {
+    attendanceMap[a.user_id] = a.status;
+  });
+  
+  const content = `
+    <div style="margin-top:20px">
+      <div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);padding:12px;border-radius:10px;margin-bottom:15px;font-size:13px;color:#6ee7b7">
+        💡 <strong>طريقة التسجيل:</strong> كل طالب عنده 3 نقاط حضور. لو اتشيك على نقطتين أو 3 = <span style="color:var(--success)">حاضر ✅</span>، لو نقطة واحدة أو 0 = <span style="color:var(--danger)">غائب ❌</span>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px;max-height:500px;overflow-y:auto">
+        ${students.map(s => {
+          const currentStatus = attendanceMap[s.id] || 'absent';
+          // نحسب عدد الشيكات بناءً على الحالة الحالية
+          let check1 = false, check2 = false, check3 = false;
+          if(currentStatus === 'present'){ check1 = true; check2 = true; check3 = true; }
+          
+          return `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px" data-student-row="${s.id}">
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:14px">${escapeHtml(s.full_name)}</div>
+                <div style="font-size:11px;color:var(--muted)">${escapeHtml(s.email || '')}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:15px">
+                <div style="display:flex;gap:8px;align-items:center">
+                  <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:var(--muted)">
+                    <input type="checkbox" class="attendance-check" data-student="${s.id}" data-check="1" ${check1 ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer;accent-color:var(--success)"/>
+                    <span>1</span>
+                  </label>
+                  <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:var(--muted)">
+                    <input type="checkbox" class="attendance-check" data-student="${s.id}" data-check="2" ${check2 ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer;accent-color:var(--success)"/>
+                    <span>2</span>
+                  </label>
+                  <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:var(--muted)">
+                    <input type="checkbox" class="attendance-check" data-student="${s.id}" data-check="3" ${check3 ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer;accent-color:var(--success)"/>
+                    <span>3</span>
+                  </label>
+                </div>
+                <span class="attendance-status-badge badge ${currentStatus === 'present' ? 'badge-success' : 'badge-danger'}" data-student-status="${s.id}">
+                  ${currentStatus === 'present' ? '✅ حاضر' : '❌ غائب'}
+                </span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      
+      <button class="btn btn-primary" id="saveAttendanceBtn" style="margin-top:20px;width:100%">💾 حفظ الحضور</button>
+    </div>
+  `;
+  
+  $('#attendanceContent').innerHTML = content;
+  
+  // تحديث الحالة عند تغيير checkbox
+  $$('.attendance-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const studentId = cb.dataset.student;
+      const checks = $$(`.attendance-check[data-student="${studentId}"]`);
+      const checkedCount = Array.from(checks).filter(c => c.checked).length;
+      
+      const badge = $(`[data-student-status="${studentId}"]`);
+      if(checkedCount >= 2){
+        badge.className = 'attendance-status-badge badge badge-success';
+        badge.textContent = '✅ حاضر';
+      } else {
+        badge.className = 'attendance-status-badge badge badge-danger';
+        badge.textContent = '❌ غائب';
+      }
+    });
+  });
+  
+  // حفظ الحضور
+  $('#saveAttendanceBtn').addEventListener('click', async () => {
+    const btn = $('#saveAttendanceBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> جاري الحفظ...';
+    
+    try {
+      const studentsData = {};
+      
+      // نجمع البيانات لكل طالب
+      $$('.attendance-check').forEach(cb => {
+        const studentId = cb.dataset.student;
+        if(!studentsData[studentId]) studentsData[studentId] = 0;
+        if(cb.checked) studentsData[studentId]++;
+      });
+      
+      // نحفظ لكل طالب
+      for(const [studentId, checkCount] of Object.entries(studentsData)){
+        const status = checkCount >= 2 ? 'present' : 'absent';
+        
+        await sb.from('attendance').upsert({
+          lesson_id: parseInt($('#attendanceLessonSelect').value),
+          user_id: studentId,
+          status: status
+        }, { onConflict: 'user_id,lesson_id' });
+      }
+      
+      toast('✅ تم حفظ الحضور بنجاح', 'success');
+    } catch(err) {
+      toast('❌ ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '💾 حفظ الحضور';
+    }
+  });
+}
 
 async function renderMaterials(){
   const area=$('#contentArea'); const admin=isAdmin();
@@ -1259,7 +1516,7 @@ async function renderAssignmentResults(){
 async function renderProjects(){
   const area=$('#contentArea'); const admin=isAdmin();
   
-  const { data: projs, error } = await sb.from('projects').select('*').order('created_at',{ascending:false});
+  const { data: projs, error } = await sb.from('projects').select('*').order('id',{ascending:false});
   
   if(error){
     area.innerHTML = `<div class="card"><div class="empty-state"><div class="icon">⚠️</div><p>خطأ في تحميل البروجيكتات: ${escapeHtml(error.message)}</p></div></div>`;
