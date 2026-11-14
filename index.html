@@ -375,11 +375,26 @@ async function checkAndAwardAutoBadges(userId, type){
   const icons = {material_view:'🔍',assignment_pass:'🌟',exam_complete:'📝',project_submit:'💪'};
   const badgeName = names[type];
   if(!badgeName || !badgeMap[badgeName]) return;
-  const { data: existing } = await sb.from('user_badges').select('id').eq('user_id', userId).eq('badge_id', badgeMap[badgeName]).maybeSingle();
-  if(!existing){
-    await sb.from('user_badges').insert({ user_id: userId, badge_id: badgeMap[badgeName], quantity: 1 });
-    await recalculatePoints(userId);
-    if(userId === currentProfile.id) toast(`🎉 حصلت على وسام "${badgeName} ${icons[type]}"!`, 'success');
+  
+  // كل مرة بيزيد quantity بـ 1
+  const { data: existing } = await sb.from('user_badges')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('badge_id', badgeMap[badgeName])
+    .maybeSingle();
+  
+  if(existing){
+    await sb.from('user_badges')
+      .update({ quantity: (existing.quantity || 0) + 1 })
+      .eq('id', existing.id);
+  } else {
+    await sb.from('user_badges')
+      .insert({ user_id: userId, badge_id: badgeMap[badgeName], quantity: 1 });
+  }
+  
+  await recalculatePoints(userId);
+  if(userId === currentProfile.id){
+    toast(`🎉 حصلت على وسام "${badgeName} ${icons[type]}"!`, 'success');
   }
 }
 
@@ -961,14 +976,16 @@ async function renderAssignmentResults(){
 async function renderProjects(){
   const area=$('#contentArea'); const admin=isAdmin();
   const {data:projs}=await sb.from('projects').select('*').order('created_at',{ascending:false});
-  const addBtn=admin?`<button class="btn btn-primary-solid" data-action="add-project">+ بروجيكت</button>`:'';
-  const body=(!projs||!projs.length)?`<div class="empty-state"><div class="icon">🎯</div><p>لا توجد بروجيكتات</p></div>`:`<div class="grid">${projs.map(p=>`<div class="item-card"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.description||'')}</p>${p.deadline?`<div class="item-meta"><span class="badge badge-warning">⏰ ${formatDate(p.deadline)}</span></div>`:''}<div class="btn-group"><button class="btn btn-primary-solid btn-sm" data-action="submit-project" data-id="${p.id}">📤 تسليم</button>${admin?`<button class="btn btn-outline btn-sm" data-action="view-subs" data-id="${p.id}">👁️ التسليمات</button><button class="btn btn-danger btn-sm" data-action="delete-project" data-id="${p.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`;
+  const addBtn=admin?`<button class="btn btn-primary-solid" id="addProjectBtn">+ بروجيكت</button>`:'';
+  const body=(!projs||!projs.length)?`<div class="empty-state"><div class="icon">🎯</div><p>لا توجد بروجيكتات</p></div>`:`<div class="grid">${projs.map(p=>`<div class="item-card"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.description||'')}</p>${p.deadline?`<div class="item-meta"><span class="badge badge-warning">⏰ ${formatDate(p.deadline)}</span></div>`:''}<div class="btn-group"><button class="btn btn-primary-solid btn-sm submit-project-btn" data-id="${p.id}">📤 تسليم</button>${admin?`<button class="btn btn-outline btn-sm view-subs-btn" data-id="${p.id}">👁️ التسليمات</button><button class="btn btn-danger btn-sm delete-project-btn" data-id="${p.id}">🗑️</button>`:''}</div></div>`).join('')}</div>`;
   area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">🎯 البروجيكت</h3>${addBtn}</div>${body}</div>`;
   
-  $$('[data-action="add-project"]').forEach(b => b.addEventListener('click', openProjectModal));
-  $$('[data-action="submit-project"]').forEach(b => b.addEventListener('click', () => submitProject(parseInt(b.dataset.id))));
-  $$('[data-action="view-subs"]').forEach(b => b.addEventListener('click', () => viewProjectSubmissions(parseInt(b.dataset.id))));
-  $$('[data-action="delete-project"]').forEach(b => b.addEventListener('click', () => deleteProject(parseInt(b.dataset.id))));
+  if(admin){
+    $('#addProjectBtn').addEventListener('click', openProjectModal);
+  }
+  $$('.submit-project-btn').forEach(b => b.addEventListener('click', () => submitProject(parseInt(b.dataset.id))));
+  $$('.view-subs-btn').forEach(b => b.addEventListener('click', () => viewProjectSubmissions(parseInt(b.dataset.id))));
+  $$('.delete-project-btn').forEach(b => b.addEventListener('click', () => deleteProject(parseInt(b.dataset.id))));
 }
 
 function openProjectModal(){
