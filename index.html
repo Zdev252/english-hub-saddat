@@ -802,7 +802,7 @@
             const { data: { publicUrl } } = sb.storage.from('materials').getPublicUrl(fileName);
             finalUrl = publicUrl;
           }
-          await sb.from('materials').insert({title:$('#matTitle').value.trim(),description:$('#matDesc').value.trim(),type:url:finalUrl,uploaded_by:currentProfile.id});
+          await sb.from('materials').insert({title:$('#matTitle').value.trim(),description:$('#matDesc').value.trim(),type:type,url:finalUrl,uploaded_by:currentProfile.id});
           toast('✅','success'); closeModal(); renderMaterials();
         } catch(err) { toast('❌ '+err.message,'error'); }
         finally { btn.disabled=false; btn.innerHTML='رفع'; }
