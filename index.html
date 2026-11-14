@@ -78,8 +78,8 @@
     .main-content { flex: 1; margin-right: var(--side); min-height: 100vh; display: flex; flex-direction: column; }
     .topbar { background: rgba(10,14,28,.85); backdrop-filter: blur(16px); padding: 14px 24px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
     .menu-toggle { display: none; background: none; border: none; font-size: 26px; cursor: pointer; color: var(--text); }
-    .page-title { font-size: 19px; font-weight: 900; flex: 1; }
-    .points-badge { background: var(--grad); color: #fff; padding: 8px 16px; border-radius: 20px; font-weight: 900; display: flex; align-items: center; gap: 6px; font-size: 14px; }
+    .page-title { font-size: 19px; font-weight: 900; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .points-badge { background: var(--grad); color: #fff; padding: 8px 16px; border-radius: 20px; font-weight: 900; display: flex; align-items: center; gap: 6px; font-size: 14px; white-space: nowrap; }
     .content-area { padding: 24px; flex: 1; }
     .stats-grid, .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 24px; }
     .stat-card, .card, .item-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 22px; transition: .3s; }
@@ -98,7 +98,7 @@
     .badge-warning { background: rgba(251,191,36,.12); color: #fcd34d; border-color: rgba(251,191,36,.35); }
     .badge-danger { background: rgba(248,113,113,.12); color: #fca5a5; border-color: rgba(248,113,113,.35); }
     .badge-info { background: rgba(34,211,238,.12); color: #67e8f9; border-color: rgba(34,211,238,.35); }
-    .btn { padding: 8px 16px; border: none; border-radius: 9px; font-family: inherit; font-weight: 800; font-size: 13px; cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; text-decoration: none;}
+    .btn { padding: 8px 16px; border: none; border-radius: 9px; font-family: inherit; font-weight: 800; font-size: 13px; cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; text-decoration: none; }
     .btn-sm { padding: 6px 12px; font-size: 12px; min-height: 36px; }
     .btn-primary-solid { background: var(--grad); color: #fff; }
     .btn-primary-solid:hover { transform: translateY(-2px); }
@@ -142,24 +142,51 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
     .empty-state .icon { font-size: 56px; margin-bottom: 14px; opacity: .5; }
-    .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r); }
-    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r); -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
     th, td { padding: 12px 14px; text-align: right; border-bottom: 1px solid var(--border); font-size: 13px; }
     th { background: rgba(255,255,255,.04); font-weight: 800; color: #aab2c8; font-size: 12px; white-space: nowrap; }
     .dynamic-q-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px dashed var(--border); }
     .remove-q-btn { background: rgba(248,113,113,0.2); color: #fca5a5; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-top: 10px; }
+    
+    /* Badges Grid - Improved */
+    .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+    .badge-card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--r); text-align: center; transition: .3s; position: relative; overflow: hidden; }
+    .badge-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(139,92,246,.1) 0%, transparent 70%); opacity: 0; transition: .3s; }
+    .badge-card:hover::before { opacity: 1; }
+    .badge-card:hover { transform: translateY(-5px) scale(1.02); border-color: rgba(139,92,246,.5); box-shadow: 0 12px 35px rgba(139,92,246,.2); }
+    .badge-card.earned { background: linear-gradient(135deg, rgba(139,92,246,.2), rgba(34,211,238,.1)); border-color: rgba(139,92,246,.6); box-shadow: 0 0 25px rgba(139,92,246,.15); }
+    .badge-icon { font-size: 42px; margin-bottom: 10px; filter: drop-shadow(0 4px 8px rgba(139,92,246,.3)); }
+    .badge-name { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+    .badge-points { font-size: 12px; color: var(--muted); }
+    .badge-qty { background: var(--grad); color: #fff; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 900; display: inline-block; margin-top: 8px; box-shadow: 0 2px 8px rgba(139,92,246,.3); }
+    
+    /* Footer */
+    .footer { text-align: center; padding: 20px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 40px; }
+    .footer a { color: var(--accent); text-decoration: none; }
+    
+    /* Responsive */
     @media (max-width: 900px) {
       .sidebar { transform: translateX(100%); }
       .sidebar.open { transform: translateX(0); }
       .main-content { margin-right: 0; }
       .menu-toggle { display: block; }
       .content-area { padding: 16px; }
+      .stats-grid, .grid, .badges-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+      table { min-width: 600px; }
     }
     @media (max-width: 600px) {
       .login-container { padding: 30px 20px; }
-      .stats-grid, .grid { grid-template-columns: 1fr; }
+      .stats-grid, .grid, .badges-grid { grid-template-columns: 1fr; }
       .btn-group { flex-direction: column; }
       .btn-group .btn { width: 100%; }
+      .modal-content { width: 95%; max-height: 95vh; }
+      .modal-body { padding: 20px 16px; }
+      .topbar { padding: 12px 16px; }
+      .page-title { font-size: 16px; }
+      .points-badge { padding: 6px 12px; font-size: 13px; }
+      table { min-width: 500px; font-size: 12px; }
+      th, td { padding: 10px 8px; }
     }
   </style>
 </head>
@@ -221,6 +248,9 @@
         <div class="points-badge"><span>⭐</span><span id="userPoints">0</span></div>
       </header>
       <div class="content-area" id="contentArea"></div>
+      <div class="footer">
+        تطوير: <strong>فاروق امجد فاروق المليجي</strong> | منصة تعليم اللغة الإنجليزية - مدرسة السادات الثانوية بنين
+      </div>
     </main>
   </div>
 
@@ -248,7 +278,7 @@
       $('#toastContainer').appendChild(t);
       setTimeout(()=>{t.style.opacity='0';t.style.transition='.3s';setTimeout(()=>t.remove(),300)},3500);
     }
-    function openModal(html){ $('#modalBody').innerHTML=html; $('#modal').classList.add('active'); }
+    function openModal(html){ $('#modalBody').innerHTML=html; $('#modal').classList.add('active'); $('#modalClose').style.display='flex'; }
     function closeModal(){ $('#modal').classList.remove('active'); }
     $('#modalClose').addEventListener('click', closeModal);
     $('#modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal(); });
@@ -256,15 +286,6 @@
     function escapeHtml(s){ if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
     function formatDate(d){ if(!d)return''; try{return new Date(d).toLocaleDateString('ar-EG',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch{return d} }
     function toLocalInput(d){ if(!d)return''; const x=new Date(d); x.setMinutes(x.getMinutes()-x.getTimezoneOffset()); return x.toISOString().slice(0,16); }
-    function getAutoStatus(start, end) {
-        const now = new Date();
-        const s = start ? new Date(start) : null;
-        const e = end ? new Date(end) : null;
-        if (!s) return 'upcoming';
-        if (now < s) return 'upcoming';
-        if (e && now > e) return 'completed';
-        return 'live';
-    }
 
     $('#loginForm').addEventListener('submit', async e=>{
       e.preventDefault();
@@ -279,19 +300,35 @@
     });
 
     $('#logoutBtn').addEventListener('click', async ()=>{ await sb.auth.signOut(); location.reload(); });
+    
     $('#changePassBtn').addEventListener('click', ()=>{
       openModal(`<h2>🔑 تغيير كلمة المرور</h2><form id="cpForm">
-        <div class="input-group"><label>كلمة المرور الجديدة</label><input type="password" id="cpNew" minlength="6" required/></div>
+        <div class="input-group"><label>كلمة المرور الجديدة</label><input type="password" id="cpNew" minlength="6" required placeholder="6 أحرف على الأقل"/></div>
+        <div class="input-group"><label>تأكيد كلمة المرور</label><input type="password" id="cpConfirm" minlength="6" required placeholder="أعد كتابة كلمة المرور"/></div>
         <button type="submit" class="btn-primary">حفظ</button></form>`);
       $('#cpForm').addEventListener('submit', async e=>{
         e.preventDefault();
-        const { error } = await sb.auth.updateUser({ password: $('#cpNew').value });
+        const newPass = $('#cpNew').value;
+        const confirmPass = $('#cpConfirm').value;
+        
+        if(newPass !== confirmPass){
+          toast('❌ كلمتا المرور غير متطابقتين', 'error');
+          return;
+        }
+        
+        if(newPass === '123456'){
+          toast('❌ لا يمكن استخدام كلمة المرور الافتراضية', 'error');
+          return;
+        }
+        
+        const { error } = await sb.auth.updateUser({ password: newPass });
         if(error){ toast('❌ '+error.message,'error'); return; }
-        // لو كان الحساب عليه علامة، نشيلها
+        
         if(currentProfile.must_change_password){
           await sb.from('profiles').update({ must_change_password: false }).eq('id', currentProfile.id);
           currentProfile.must_change_password = false;
         }
+        
         toast('✅ تم التغيير','success'); closeModal();
       });
     });
@@ -301,7 +338,7 @@
       if(!user) return;
       currentUser = user;
       const { data: profile, error } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
-      if(error){ await sb.auth.signOut(); $('#loginError').textContent = '⚠️ جداول قاعدة البيانات غير جاهزة. تواصل مع الدعم.'; return; }
+      if(error){ await sb.auth.signOut(); $('#loginError').textContent = '⚠️ جداول قاعدة البيانات غير جاهزة'; return; }
       let p = profile;
       if(!p){
         const meta = user.user_metadata || {};
@@ -322,19 +359,76 @@
       $('#userPoints').textContent = currentProfile.points || 0;
       buildSidebar();
       navigate('dashboard');
-
+      
       // فحص لو الحساب على باسورد افتراضي
-      if(currentProfile.must_change_password === true){
-        showPasswordChangeWarning();
-      }
+      setTimeout(() => {
+        if(currentProfile.must_change_password === true){
+          showPasswordChangeWarning();
+        }
+      }, 500);
+    }
+
+    function showPasswordChangeWarning(){
+      openModal(`
+        <h2 style="color:var(--warning);text-align:center">⚠️ تنبيه أمني</h2>
+        <div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);padding:16px;border-radius:10px;margin-bottom:20px">
+          <p style="font-size:14px;line-height:1.8;color:#fcd34d">
+            حسابك حالياً يستخدم <strong>كلمة مرور افتراضية</strong>.<br>
+            لحماية حسابك من السرقة، يجب تغيير كلمة المرور الآن.
+          </p>
+        </div>
+        <form id="forceChangePassForm">
+          <div class="input-group">
+            <label>كلمة المرور الجديدة</label>
+            <input type="password" id="forceNewPass" minlength="6" required placeholder="6 أحرف على الأقل"/>
+          </div>
+          <div class="input-group">
+            <label>تأكيد كلمة المرور</label>
+            <input type="password" id="forceConfirmPass" minlength="6" required placeholder="أعد كتابة كلمة المرور"/>
+          </div>
+          <button type="submit" class="btn-primary">تغيير كلمة المرور الآن 🔒</button>
+        </form>
+      `);
+
+      $('#modalClose').style.display = 'none';
+      $('#modal').onclick = null;
+
+      $('#forceChangePassForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const newPass = $('#forceNewPass').value;
+        const confirmPass = $('#forceConfirmPass').value;
+
+        if(newPass !== confirmPass){
+          toast('❌ كلمتا المرور غير متطابقتين', 'error');
+          return;
+        }
+
+        if(newPass === '123456'){
+          toast('❌ لا يمكن استخدام كلمة المرور الافتراضية', 'error');
+          return;
+        }
+
+        const { error } = await sb.auth.updateUser({ password: newPass });
+        if(error){
+          toast('❌ ' + error.message, 'error');
+          return;
+        }
+
+        await sb.from('profiles').update({ must_change_password: false }).eq('id', currentProfile.id);
+        currentProfile.must_change_password = false;
+
+        $('#modalClose').style.display = 'flex';
+        $('#modal').addEventListener('click', ev => { if(ev.target.id === 'modal') closeModal(); });
+
+        toast('✅ تم تغيير كلمة المرور بنجاح', 'success');
+        closeModal();
+      });
     }
 
     function buildSidebar(){
       const role = currentProfile.role;
       const items = [
         {id:'dashboard',icon:'🏠',label:'الرئيسية',roles:['student','teacher','admin']},
-
-        // تظهر للمدرس والأدمن فقط
         {id:'announcements',icon:'📢',label:'إدارة الإعلانات',roles:['teacher','admin']},
         {id:'badges',icon:'🎖️',label:'إدارة الأوسمة',roles:['teacher','admin']},
         {id:'lessons',icon:'📚',label:'الحصص',roles:['student','teacher','admin']},
@@ -360,47 +454,38 @@
     function navigate(page){
       currentPage=page;
       $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
-      const titles={
-        dashboard:'الرئيسية',
-        announcements:'إدارة الإعلانات',
-        badges:'إدارة الأوسمة',
-        lessons:'الحصص',
-        materials:'التعلم الذاتي',
-        exams:'الامتحانات',
-        projects:'البروجيكت',
-        support:'الدعم الفني',
-        admin:'لوحة التحكم'
-      };
+      const titles={dashboard:'الرئيسية',announcements:'إدارة الإعلانات',badges:'إدارة الأوسمة',lessons:'الحصص',materials:'التعلم الذاتي',exams:'الامتحانات',projects:'البروجيكت',support:'الدعم الفني',admin:'لوحة التحكم'};
       $('#pageTitle').textContent=titles[page]||'';
       closeSidebar();
-      const R={
-        dashboard:renderDashboard,
-        announcements:renderAnnouncements,
-        badges:renderBadges,
-        lessons:renderLessons,
-        materials:renderMaterials,
-        exams:renderExams,
-        projects:renderProjects,
-        support:renderSupport,
-        admin:renderAdmin
-      };
+      const R={dashboard:renderDashboard,announcements:renderAnnouncements,badges:renderBadges,lessons:renderLessons,materials:renderMaterials,exams:renderExams,projects:renderProjects,support:renderSupport,admin:renderAdmin};
       if(R[page]) R[page]();
     }
     window.navigate = navigate;
     const isStaff = () => currentProfile.role==='teacher' || currentProfile.role==='admin';
 
-    // ================= DASHBOARD (Merged) =================
-    async function renderDashboard(){
-      const area = $('#contentArea');
-      area.innerHTML = '<div class="empty-state"><span class="loader"></span><p style="margin-top:12px">جاري التحميل...</p></div>';
+    async function recalculatePoints(userId){
+      const { data: userBadges } = await sb.from('user_badges').select('quantity, badges(points)').eq('user_id', userId);
+      const totalPoints = (userBadges || []).reduce((sum, ub) => {
+        return sum + ((ub.badges?.points || 0) * (ub.quantity || 1));
+      }, 0);
+      await sb.from('profiles').update({ points: totalPoints }).eq('id', userId);
+      if(userId === currentProfile.id){
+        currentProfile.points = totalPoints;
+        $('#userPoints').textContent = totalPoints;
+      }
+      return totalPoints;
+    }
 
+    async function renderDashboard(){
+      const area=$('#contentArea');
+      area.innerHTML='<div class="empty-state"><span class="loader"></span><p style="margin-top:12px">جاري التحميل...</p></div>';
+      
       try {
-        // جلب البيانات بالتوازي
         const [annRes, lbRes, badgesRes] = await Promise.all([
           sb.from('announcements').select('*').order('created_at', { ascending: false }).limit(5),
           sb.from('profiles').select('id,full_name,points').eq('role','student').order('points', { ascending: false }).limit(5),
           currentProfile.role === 'student' 
-            ? sb.from('user_badges').select('quantity, awarded_at, badges(id, name, icon, points, description)').eq('user_id', currentProfile.id)
+            ? sb.from('user_badges').select('quantity, badges(id, name, icon, points)').eq('user_id', currentProfile.id)
             : Promise.resolve({ data: [] })
         ]);
 
@@ -408,7 +493,6 @@
         const leaderboard = lbRes.data || [];
         const myBadges = badgesRes.data || [];
 
-        // ===== رسالة الترحيب =====
         const welcomeHTML = `
           <div class="card" style="background: linear-gradient(135deg, rgba(139,92,246,.15), rgba(34,211,238,.08)); border-color: rgba(139,92,246,.3);">
             <h2 style="margin-bottom:8px">أهلاً <span class="gradient-text">${escapeHtml(currentProfile.full_name)}</span> 👋</h2>
@@ -416,7 +500,6 @@
           </div>
         `;
 
-        // ===== قسم أوسمتي (للطالب فقط) =====
         let myBadgesHTML = '';
         if(currentProfile.role === 'student' && myBadges.length > 0){
           const totalBadges = myBadges.reduce((sum, b) => sum + (b.quantity || 1), 0);
@@ -456,7 +539,6 @@
           `;
         }
 
-        // ===== قسم الإعلانات =====
         let annHTML = '';
         if(announcements.length > 0){
           annHTML = `
@@ -478,21 +560,8 @@
               `).join('')}
             </div>
           `;
-        } else {
-          annHTML = `
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">📢 الإعلانات</h3>
-              </div>
-              <div class="empty-state" style="padding:30px 20px">
-                <div class="icon" style="font-size:40px">📢</div>
-                <p style="font-size:13px">لا توجد إعلانات حالياً</p>
-              </div>
-            </div>
-          `;
         }
 
-        // ===== قسم المتصدرين =====
         let lbHTML = '';
         if(leaderboard.length > 0){
           const medals = ['🥇','🥈','🥉'];
@@ -517,7 +586,6 @@
           `;
         }
 
-        // ===== تجميع الصفحة =====
         area.innerHTML = `
           ${welcomeHTML}
           ${currentProfile.role === 'student' ? myBadgesHTML : ''}
@@ -529,135 +597,220 @@
 
       } catch(err) {
         console.error('Dashboard error:', err);
-        area.innerHTML = `
-          <div class="card">
-            <div class="empty-state">
-              <div class="icon">⚠️</div>
-              <p>حدث خطأ في تحميل البيانات</p>
-              <p class="muted" style="margin-top:10px">${escapeHtml(err.message)}</p>
-            </div>
-          </div>
-        `;
+        area.innerHTML = `<div class="card"><div class="empty-state"><div class="icon">⚠️</div><p>حدث خطأ في تحميل البيانات</p></div></div>`;
       }
     }
 
-    // ================= LESSONS =================
+    async function renderAnnouncements(){
+      const area = $('#contentArea');
+      if(!isStaff()){ area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
+      area.innerHTML = '<div class="empty-state"><span class="loader"></span></div>';
+      const { data, error } = await sb.from('announcements').select('*').order('created_at', { ascending:false });
+      if(error){ area.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${escapeHtml(error.message)}</p></div>`; return; }
+      const announcements = data || [];
+      const body = announcements.length ? announcements.map(a => `
+        <div class="announcement-card ${a.type === 'urgent' ? 'urgent' : ''}">
+          <div class="announcement-header">
+            <div class="announcement-title">${a.type === 'urgent' ? '🚨' : a.type === 'opportunity' ? '🌟' : '📢'} ${escapeHtml(a.title)}</div>
+            <div class="announcement-date">${formatDate(a.created_at)}</div>
+          </div>
+          <div class="announcement-content">${escapeHtml(a.content || '')}</div>
+          <div style="margin-top:12px"><button class="btn btn-danger btn-sm" onclick="deleteAnnouncement(${a.id})">🗑️ حذف</button></div>
+        </div>
+      `).join('') : `<div class="empty-state"><div class="icon">📢</div><p>لا توجد إعلانات</p></div>`;
+      area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📢 إدارة الإعلانات</h3><button class="btn btn-primary-solid" onclick="openAnnouncementModal()">➕ إضافة</button></div>${body}</div>`;
+    }
+
+    window.openAnnouncementModal = function(){
+      openModal(`<h2>📢 إضافة إعلان</h2><form id="announcementForm">
+        <div class="input-group"><label>العنوان</label><input type="text" id="annTitle" required></div>
+        <div class="input-group"><label>المحتوى</label><textarea id="annContent" rows="5" required></textarea></div>
+        <div class="input-group"><label>النوع</label><select id="annType"><option value="general">عام</option><option value="urgent">عاجل</option><option value="opportunity">فرصة</option></select></div>
+        <button type="submit" class="btn-primary">نشر</button></form>`);
+      $('#announcementForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const { error } = await sb.from('announcements').insert({ title: $('#annTitle').value.trim(), content: $('#annContent').value.trim(), type: $('#annType').value, created_by: currentProfile.id });
+        if(error){ toast('❌ ' + error.message, 'error'); return; }
+        toast('✅ تم النشر', 'success'); closeModal(); renderAnnouncements();
+      });
+    };
+
+    window.deleteAnnouncement = async function(id){
+      if(!confirm('حذف؟')) return;
+      await sb.from('announcements').delete().eq('id', id);
+      toast('🗑️ تم الحذف', 'success'); renderAnnouncements();
+    };
+
+    async function renderBadges(){
+      const area = $('#contentArea');
+      if(!isStaff()){ area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
+      area.innerHTML = '<div class="empty-state"><span class="loader"></span></div>';
+      const { data, error } = await sb.from('badges').select('*').order('id', { ascending:false });
+      if(error){ area.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${escapeHtml(error.message)}</p></div>`; return; }
+      const badges = data || [];
+      const body = badges.length ? `<div class="badges-grid">${badges.map(b => `
+        <div class="badge-card">
+          <div class="badge-icon">${escapeHtml(b.icon || '🏅')}</div>
+          <div class="badge-name">${escapeHtml(b.name)}</div>
+          <div class="badge-points">⭐ ${b.points || 0}</div>
+          ${b.description ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">${escapeHtml(b.description)}</div>` : ''}
+          <div class="btn-group" style="margin-top:12px">
+            <button class="btn btn-success btn-sm" onclick="openAwardModal(${b.id})">🎁 منح</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteBadge(${b.id})">🗑️</button>
+          </div>
+        </div>
+      `).join('')}</div>` : `<div class="empty-state"><div class="icon">🎖️</div><p>لا توجد أوسمة</p></div>`;
+      area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">🎖️ إدارة الأوسمة</h3><button class="btn btn-primary-solid" onclick="openBadgeModal()">➕ إضافة وسام</button></div>${body}</div>`;
+    }
+
+    window.openBadgeModal = function(){
+      openModal(`<h2>🎖️ إضافة وسام</h2><form id="badgeForm">
+        <div class="input-group"><label>الاسم</label><input type="text" id="badgeName" required></div>
+        <div class="input-group"><label>الأيقونة</label><input type="text" id="badgeIcon" value="🏅"></div>
+        <div class="input-group"><label>النقاط</label><input type="number" id="badgePoints" value="10" min="0"></div>
+        <div class="input-group"><label>الوصف</label><textarea id="badgeDesc" rows="3"></textarea></div>
+        <button type="submit" class="btn-primary">حفظ</button></form>`);
+      $('#badgeForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const { error } = await sb.from('badges').insert({ name: $('#badgeName').value.trim(), icon: $('#badgeIcon').value.trim() || '🏅', points: parseInt($('#badgePoints').value) || 0, description: $('#badgeDesc').value.trim() });
+        if(error){ toast('❌ ' + error.message, 'error'); return; }
+        toast('✅ تم', 'success'); closeModal(); renderBadges();
+      });
+    };
+
+    window.openAwardModal = async function(preselectedBadgeId = null){
+      const [badgesRes, studentsRes] = await Promise.all([
+        sb.from('badges').select('*').order('name'),
+        sb.from('profiles').select('*').eq('role','student').order('full_name')
+      ]);
+      const badges = badgesRes.data || [];
+      const students = studentsRes.data || [];
+      if(!badges.length){ toast('⚠️ أضف وسام الأول', 'warning'); return; }
+      if(!students.length){ toast('⚠️ لا يوجد طلاب', 'warning'); return; }
+      openModal(`<h2>🎁 منح وسام</h2><form id="awardForm">
+        <div class="input-group"><label>الطالب</label><select id="awardStudent" required>${students.map(s => `<option value="${s.id}">${escapeHtml(s.full_name)}</option>`).join('')}</select></div>
+        <div class="input-group"><label>الوسام</label><select id="awardBadge" required>${badges.map(b => `<option value="${b.id}" ${preselectedBadgeId == b.id ? 'selected' : ''}>${escapeHtml(b.icon || '🏅')} ${escapeHtml(b.name)} - ${b.points || 0} نقطة</option>`).join('')}</select></div>
+        <div class="input-group"><label>العدد</label><input type="number" id="awardQty" value="1" min="1"></div>
+        <button type="submit" class="btn-primary">منح</button></form>`);
+      $('#awardForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const studentId = $('#awardStudent').value;
+        const badgeId = parseInt($('#awardBadge').value);
+        const qty = parseInt($('#awardQty').value) || 1;
+        const { data: badge } = await sb.from('badges').select('*').eq('id', badgeId).single();
+        const { data: existing } = await sb.from('user_badges').select('*').eq('user_id', studentId).eq('badge_id', badgeId).maybeSingle();
+        if(existing){ await sb.from('user_badges').update({ quantity: (existing.quantity || 0) + qty }).eq('id', existing.id); }
+        else { await sb.from('user_badges').insert({ user_id: studentId, badge_id: badgeId, quantity: qty }); }
+        await recalculatePoints(studentId);
+        toast(`✅ تم المنح`, 'success'); closeModal(); renderBadges();
+      });
+    };
+
+    window.deleteBadge = async function(id){
+      if(!confirm('حذف؟')) return;
+      await sb.from('badges').delete().eq('id', id);
+      toast('🗑️ تم', 'success'); renderBadges();
+    };
+
     async function renderLessons(){
       const area=$('#contentArea');
       area.innerHTML='<div class="empty-state"><span class="loader"></span></div>';
       const { data: lessons } = await sb.from('lessons').select('*, profiles(full_name)').order('start_time',{ascending:true});
       const staff=isStaff();
-      const addBtn=staff?`<button class="btn btn-primary-solid" onclick="openLessonModal()">+ إضافة حصة</button>`:'';
+      const addBtn=staff?`<button class="btn btn-primary-solid" onclick="openLessonModal()">+ إضافة</button>`:'';
       const body=(!lessons||!lessons.length)?`<div class="empty-state"><div class="icon">📚</div><p>لا توجد حصص</p></div>`:`<div class="grid">${lessons.map(l=>lessonCard(l,staff)).join('')}</div>`;
-      area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">📚 الحصص الدراسية</h3>${addBtn}</div>${body}</div>`;
+      area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">📚 الحصص</h3>${addBtn}</div>${body}</div>`;
     }
+
     function lessonCard(l,staff){
-      const status = getAutoStatus(l.start_time, l.end_time);
-      const M={upcoming:['قادمة','badge-info'],live:['مباشر الآن 🔴','badge-danger'],completed:['انتهت','badge-success']};
-      const s=M[status]||M.upcoming;
-      return `<div class="item-card"><div class="item-card-header"><span class="badge ${s[1]}">${s[0]}</span></div>
+      const now = new Date();
+      const start = l.start_time ? new Date(l.start_time) : null;
+      const end = l.end_time ? new Date(l.end_time) : null;
+      let status = 'upcoming', statusClass = 'badge-info', statusText = 'قادمة';
+      if(start && now >= start && (!end || now <= end)){ status = 'live'; statusClass = 'badge-danger'; statusText = 'مباشر 🔴'; }
+      else if(end && now > end){ status = 'completed'; statusClass = 'badge-success'; statusText = 'انتهت'; }
+      return `<div class="item-card"><div class="item-card-header"><span class="badge ${statusClass}">${statusText}</span></div>
         <h3>${escapeHtml(l.title)}</h3><p>${escapeHtml(l.description||'')}</p>
         <div class="item-meta"><span class="badge badge-primary">👨‍🏫 ${escapeHtml(l.profiles?.full_name||'مدرس')}</span><span class="badge badge-info">🕐 ${l.start_time?formatDate(l.start_time):'غير محدد'}</span></div>
         ${l.lesson_link ? `<a href="${escapeHtml(l.lesson_link)}" target="_blank" class="btn btn-success btn-sm" style="margin-bottom:10px; width:100%">🔗 دخول الحصة</a>` : ''}
         <div class="btn-group">${staff
-          ?`<button class="btn btn-sm btn-outline" onclick="openAttendanceModal(${l.id})">📋 الحضور</button><button class="btn btn-sm btn-warning" onclick="openLessonModal(${l.id})">✏️</button><button class="btn btn-sm btn-danger" onclick="deleteLesson(${l.id})">🗑️</button>`
-          :`<button class="btn btn-sm btn-success" onclick="markAttendance(${l.id},'present')">✅ حاضر</button><button class="btn btn-sm btn-danger" onclick="markAttendance(${l.id},'absent')">❌ غائب</button>`}</div></div>`;
+          ?`<button class="btn btn-sm btn-outline" onclick="openAttendanceModal(${l.id})">📋</button><button class="btn btn-sm btn-warning" onclick="openLessonModal(${l.id})">✏️</button><button class="btn btn-sm btn-danger" onclick="deleteLesson(${l.id})">🗑️</button>`
+          :`<button class="btn btn-sm btn-success" onclick="markAttendance(${l.id},'present')">✅</button><button class="btn btn-sm btn-danger" onclick="markAttendance(${l.id},'absent')">❌</button>`}</div></div>`;
     }
+
     window.openLessonModal=async function(id=null){
-      let L={title:'',description:'',start_time:'',end_time:'',lesson_link:'',status:'upcoming'};
+      let L={title:'',description:'',start_time:'',end_time:'',lesson_link:''};
       if(id){ const {data}=await sb.from('lessons').select('*').eq('id',id).single(); if(data)L=data; }
       openModal(`<h2>${id?'تعديل':'إضافة'} حصة</h2><form id="lessonForm">
-        <div class="input-group"><label>عنوان الحصة</label><input type="text" id="lessonTitle" value="${escapeHtml(L.title)}" required/></div>
+        <div class="input-group"><label>العنوان</label><input type="text" id="lessonTitle" value="${escapeHtml(L.title)}" required/></div>
         <div class="input-group"><label>الوصف</label><textarea id="lessonDesc" rows="2">${escapeHtml(L.description||'')}</textarea></div>
-        <div class="input-group"><label>رابط الحصة (Zoom/Meet)</label><input type="url" id="lessonLink" value="${escapeHtml(L.lesson_link||'')}" placeholder="https://..."/></div>
-        <div class="input-group"><label>وقت البداية</label><input type="datetime-local" id="lessonStart" value="${toLocalInput(L.start_time)}"/></div>
-        <div class="input-group"><label>وقت النهاية</label><input type="datetime-local" id="lessonEnd" value="${toLocalInput(L.end_time)}"/></div>
+        <div class="input-group"><label>الرابط</label><input type="url" id="lessonLink" value="${escapeHtml(L.lesson_link||'')}" placeholder="https://..."/></div>
+        <div class="input-group"><label>البداية</label><input type="datetime-local" id="lessonStart" value="${toLocalInput(L.start_time)}"/></div>
+        <div class="input-group"><label>النهاية</label><input type="datetime-local" id="lessonEnd" value="${toLocalInput(L.end_time)}"/></div>
         <button type="submit" class="btn-primary">حفظ</button></form>`);
       $('#lessonForm').addEventListener('submit', async e=>{
         e.preventDefault();
-        const p={title:$('#lessonTitle').value.trim(),description:$('#lessonDesc').value.trim(),lesson_link:$('#lessonLink').value.trim(),
-          start_time:$('#lessonStart').value?new Date($('#lessonStart').value).toISOString():null,
-          end_time:$('#lessonEnd').value?new Date($('#lessonEnd').value).toISOString():null,
-          teacher_id:currentProfile.id};
+        const p={title:$('#lessonTitle').value.trim(),description:$('#lessonDesc').value.trim(),lesson_link:$('#lessonLink').value.trim(),start_time:$('#lessonStart').value?new Date($('#lessonStart').value).toISOString():null,end_time:$('#lessonEnd').value?new Date($('#lessonEnd').value).toISOString():null,teacher_id:currentProfile.id};
         const {error}=id?await sb.from('lessons').update(p).eq('id',id):await sb.from('lessons').insert(p);
         if(error){toast('❌ '+error.message,'error');return;}
-        toast('✅ تم الحفظ','success'); closeModal(); renderLessons();
+        toast('✅','success'); closeModal(); renderLessons();
       });
     };
-    window.deleteLesson=async function(id){ if(!confirm('حذف؟'))return; await sb.from('lessons').delete().eq('id',id); toast('🗑️ تم','success'); renderLessons(); };
+
+    window.deleteLesson=async function(id){ if(!confirm('حذف؟'))return; await sb.from('lessons').delete().eq('id',id); toast('🗑️','success'); renderLessons(); };
+
     window.openAttendanceModal=async function(lessonId){
       const {data:students}=await sb.from('profiles').select('*').eq('role','student').order('full_name');
       const {data:att}=await sb.from('attendance').select('*').eq('lesson_id',lessonId);
       const map={}; (att||[]).forEach(a=>map[a.user_id]=a.status);
-      openModal(`<h2>📋 سجل الحضور</h2><div style="max-height:420px;overflow-y:auto">
-        ${(students||[]).map(s=>{const st=map[s.id]||'absent';return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border)">
-          <span style="font-weight:700;font-size:13.5px">${escapeHtml(s.full_name)}</span>
-          <select onchange="setAttendance(${lessonId},'${s.id}',this.value)" style="padding:6px 10px;border-radius:8px;background:var(--bg2);color:var(--text);border:1px solid var(--border)">
-            <option value="present" ${st==='present'?'selected':''}>✅ حاضر</option>
-            <option value="absent" ${st==='absent'?'selected':''}>❌ غائب</option>
-            <option value="late" ${st==='late'?'selected':''}>⏰ متأخر</option></select></div>`;}).join('')}</div>`);
+      openModal(`<h2>📋 الحضور</h2><div style="max-height:420px;overflow-y:auto">${(students||[]).map(s=>{const st=map[s.id]||'absent';return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border)"><span style="font-weight:700">${escapeHtml(s.full_name)}</span><select onchange="setAttendance(${lessonId},'${s.id}',this.value)" style="padding:6px 10px;border-radius:8px;background:var(--bg2);color:var(--text);border:1px solid var(--border)"><option value="present" ${st==='present'?'selected':''}>✅</option><option value="absent" ${st==='absent'?'selected':''}>❌</option><option value="late" ${st==='late'?'selected':''}>⏰</option></select></div>`;}).join('')}</div>`);
     };
+
     window.setAttendance=async function(l,u,st){ await sb.from('attendance').upsert({lesson_id:l,user_id:u,status:st},{onConflict:'user_id,lesson_id'}); toast('✅','success'); };
     window.markAttendance=async function(l,st){ await sb.from('attendance').upsert({lesson_id:l,user_id:currentProfile.id,status:st},{onConflict:'user_id,lesson_id'}); toast('✅','success'); };
 
-    // ================= MATERIALS (With File Upload & Dynamic Quiz) =================
     async function renderMaterials(){
       const area=$('#contentArea'); const staff=isStaff();
       const {data:mats}=await sb.from('materials').select('*').order('created_at',{ascending:false});
       const {data:assigns}=await sb.from('assignments').select('*');
-      const addBtn=staff?`<div class="btn-group"><button class="btn btn-primary-solid" onclick="openMaterialModal()">+ مادة جديدة</button><button class="btn btn-success" onclick="openAssignmentModal()">+ واجب تفاعلي</button></div>`:'';
-      const icons={video:'🎥',image:'🖼️',pdf:'📄',link:'🔗',file:'📁'};
-      const mHTML=(mats&&mats.length)?`<div class="grid">${mats.map(m=>`<div class="item-card">
-        <div class="item-card-header"><span class="badge badge-primary">${icons[m.type]||'📄'} ${m.type}</span></div>
-        <h3>${escapeHtml(m.title)}</h3><p>${escapeHtml(m.description||'')}</p>
-        <div class="btn-group"><a href="${escapeHtml(m.url)}" target="_blank" class="btn btn-primary-solid btn-sm">فتح / تحميل</a>${staff?`<button class="btn btn-danger btn-sm" onclick="deleteMaterial(${m.id})">🗑️</button>`:''}</div></div>`).join('')}</div>`
-        :`<div class="empty-state"><div class="icon">📖</div><p>لا توجد مواد</p></div>`;
-      const aHTML=(assigns&&assigns.length)?`<div class="card"><div class="card-header"><h3 class="card-title">📝 الواجبات</h3></div><div class="grid">
-        ${assigns.map(a=>`<div class="item-card"><h3>${escapeHtml(a.title)}</h3><p>${escapeHtml(a.description||'')}</p>
-        <div class="btn-group"><button class="btn btn-primary-solid btn-sm" onclick="startAssignment(${a.id})">ابدأ</button>${staff?`<button class="btn btn-danger btn-sm" onclick="deleteAssignment(${a.id})">🗑️</button>`:''}</div></div>`).join('')}</div></div>`:'';
+      const addBtn=staff?`<div class="btn-group"><button class="btn btn-primary-solid" onclick="openMaterialModal()">+ مادة</button><button class="btn btn-success" onclick="openAssignmentModal()">+ واجب</button></div>`:'';
+      const mHTML=(mats&&mats.length)?`<div class="grid">${mats.map(m=>`<div class="item-card"><h3>${escapeHtml(m.title)}</h3><p>${escapeHtml(m.description||'')}</p><div class="btn-group"><a href="${escapeHtml(m.url)}" target="_blank" class="btn btn-primary-solid btn-sm">فتح</a>${staff?`<button class="btn btn-danger btn-sm" onclick="deleteMaterial(${m.id})">🗑️</button>`:''}</div></div>`).join('')}</div>`:`<div class="empty-state"><div class="icon">📖</div><p>لا توجد مواد</p></div>`;
+      const aHTML=(assigns&&assigns.length)?`<div class="card"><div class="card-header"><h3 class="card-title">📝 الواجبات</h3></div><div class="grid">${assigns.map(a=>`<div class="item-card"><h3>${escapeHtml(a.title)}</h3><p>${escapeHtml(a.description||'')}</p><div class="btn-group"><button class="btn btn-primary-solid btn-sm" onclick="startAssignment(${a.id})">ابدأ</button>${staff?`<button class="btn btn-danger btn-sm" onclick="deleteAssignment(${a.id})">🗑️</button>`:''}</div></div>`).join('')}</div></div>`:'';
       area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">📖 التعلم الذاتي</h3>${addBtn}</div>${mHTML}</div>${aHTML}`;
     }
+
     window.openMaterialModal=function(){
       openModal(`<h2>📖 إضافة مادة</h2><form id="materialForm">
         <div class="input-group"><label>العنوان</label><input type="text" id="matTitle" required/></div>
         <div class="input-group"><label>الوصف</label><textarea id="matDesc" rows="2"></textarea></div>
-        <div class="input-group"><label>النوع</label><select id="matType" onchange="toggleMatInput()"><option value="link">رابط خارجي</option><option value="file">ملف من الجهاز (PDF/صورة)</option><option value="video">فيديو (رابط)</option></select></div>
-        <div class="input-group" id="matUrlGroup"><label>الرابط (URL)</label><input type="url" id="matUrl" placeholder="https://..."/></div>
-        <div class="input-group" id="matFileGroup" style="display:none"><label>اختر الملف</label><input type="file" id="matFile" accept=".pdf,.jpg,.jpeg,.png,.mp4"/></div>
+        <div class="input-group"><label>النوع</label><select id="matType" onchange="toggleMatInput()"><option value="link">رابط</option><option value="file">ملف</option></select></div>
+        <div class="input-group" id="matUrlGroup"><label>الرابط</label><input type="url" id="matUrl" placeholder="https://..."/></div>
+        <div class="input-group" id="matFileGroup" style="display:none"><label>الملف</label><input type="file" id="matFile"/></div>
         <button type="submit" class="btn-primary" id="matSubmitBtn">رفع</button></form>`);
-      window.toggleMatInput = () => {
-        const isFile = $('#matType').value === 'file';
-        $('#matUrlGroup').style.display = isFile ? 'none' : 'block';
-        $('#matFileGroup').style.display = isFile ? 'block' : 'none';
-      };
+      window.toggleMatInput = () => { const isFile = $('#matType').value === 'file'; $('#matUrlGroup').style.display = isFile ? 'none' : 'block'; $('#matFileGroup').style.display = isFile ? 'block' : 'none'; };
       $('#materialForm').addEventListener('submit', async e=>{
         e.preventDefault();
-        const btn=$('#matSubmitBtn'); btn.disabled=true; btn.innerHTML='<span class="loader"></span> جاري الرفع...';
+        const btn=$('#matSubmitBtn'); btn.disabled=true; btn.innerHTML='<span class="loader"></span>';
         try {
           let finalUrl = $('#matUrl').value.trim();
           const type = $('#matType').value;
           if(type === 'file' && $('#matFile').files[0]) {
             const file = $('#matFile').files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-            const { error: uploadError, data } = await sb.storage.from('materials').upload(fileName, file);
+            const fileName = `${Date.now()}_${file.name}`;
+            const { error: uploadError } = await sb.storage.from('materials').upload(fileName, file);
             if(uploadError) throw uploadError;
             const { data: { publicUrl } } = sb.storage.from('materials').getPublicUrl(fileName);
             finalUrl = publicUrl;
           }
-          const {error}=await sb.from('materials').insert({title:$('#matTitle').value.trim(),description:$('#matDesc').value.trim(),type: type==='file'?'file':type, url:finalUrl, uploaded_by:currentProfile.id});
-          if(error) throw error;
-          toast('✅ تم الرفع','success'); closeModal(); renderMaterials();
-        } catch(err) {
-          toast('❌ '+err.message,'error');
-        } finally {
-          btn.disabled=false; btn.innerHTML='رفع';
-        }
+          await sb.from('materials').insert({title:$('#matTitle').value.trim(),description:$('#matDesc').value.trim(),type:url:finalUrl,uploaded_by:currentProfile.id});
+          toast('✅','success'); closeModal(); renderMaterials();
+        } catch(err) { toast('❌ '+err.message,'error'); }
+        finally { btn.disabled=false; btn.innerHTML='رفع'; }
       });
     };
+
     window.deleteMaterial=async function(id){ if(!confirm('حذف؟'))return; await sb.from('materials').delete().eq('id',id); toast('🗑️','success'); renderMaterials(); };
 
-    // Dynamic Quiz Builder
     let currentQuestions = [];
     window.openAssignmentModal=function(){
       currentQuestions = [];
@@ -665,68 +818,36 @@
         <div class="input-group"><label>العنوان</label><input type="text" id="assignTitle" required/></div>
         <div class="input-group"><label>الوصف</label><textarea id="assignDesc" rows="2"></textarea></div>
         <div id="questionsContainer"></div>
-        <button type="button" class="btn btn-outline" style="width:100%; margin-bottom:15px" onclick="addQuestionUI()">+ إضافة سؤال جديد</button>
-        <button type="submit" class="btn-primary">حفظ الواجب</button></form>`);
+        <button type="button" class="btn btn-outline" style="width:100%; margin-bottom:15px" onclick="addQuestionUI()">+ إضافة سؤال</button>
+        <button type="submit" class="btn-primary">حفظ</button></form>`);
       renderQuestionsUI();
       $('#assignForm').addEventListener('submit', async e=>{
         e.preventDefault();
-        if(currentQuestions.length === 0) { toast('⚠️ أضف سؤالاً واحداً على الأقل','warning'); return; }
-        // Validate all questions have answers
-        for(let i=0; i<currentQuestions.length; i++) {
-            if(!currentQuestions[i].q || currentQuestions[i].correct === undefined) {
-                toast(`⚠️ أكمل بيانات السؤال رقم ${i+1}`,'warning'); return;
-            }
-        }
-        const {error}=await sb.from('assignments').insert({title:$('#assignTitle').value.trim(),description:$('#assignDesc').value.trim(),questions:currentQuestions});
-        if(error){toast('❌ '+error.message,'error');return;}
-        toast('✅ تم الإنشاء','success'); closeModal(); renderMaterials();
+        if(currentQuestions.length === 0) { toast('⚠️ أضف سؤالاً','warning'); return; }
+        await sb.from('assignments').insert({title:$('#assignTitle').value.trim(),description:$('#assignDesc').value.trim(),questions:currentQuestions});
+        toast('✅','success'); closeModal(); renderMaterials();
       });
     };
-    window.addQuestionUI = function(){
-      currentQuestions.push({ q: '', type: 'mc', options: ['','','',''], correct: 0, explanation: '' });
-      renderQuestionsUI();
-    };
-    window.removeQuestionUI = function(idx){
-      currentQuestions.splice(idx, 1);
-      renderQuestionsUI();
-    };
+
+    window.addQuestionUI = function(){ currentQuestions.push({ q: '', type: 'mc', options: ['','','',''], correct: 0, explanation: '' }); renderQuestionsUI(); };
+    window.removeQuestionUI = function(idx){ currentQuestions.splice(idx, 1); renderQuestionsUI(); };
     window.updateQuestion = function(idx, field, value){
       currentQuestions[idx][field] = value;
-      // If switching to tf, reset options
-      if(field === 'type' && value === 'tf') {
-        currentQuestions[idx].options = ['صح ✅', 'خطأ ❌'];
-        currentQuestions[idx].correct = 0;
-      } else if (field === 'type' && value === 'mc') {
-        currentQuestions[idx].options = ['','','',''];
-        currentQuestions[idx].correct = 0;
-      }
+      if(field === 'type' && value === 'tf') { currentQuestions[idx].options = ['صح ✅', 'خطأ ❌']; currentQuestions[idx].correct = 0; }
+      else if (field === 'type' && value === 'mc') { currentQuestions[idx].options = ['','','','']; currentQuestions[idx].correct = 0; }
       renderQuestionsUI();
     };
-    window.updateOption = function(qIdx, optIdx, value){
-      currentQuestions[qIdx].options[optIdx] = value;
-    };
+    window.updateOption = function(qIdx, optIdx, value){ currentQuestions[qIdx].options[optIdx] = value; };
+
     function renderQuestionsUI(){
       const container = $('#questionsContainer');
       container.innerHTML = currentQuestions.map((q, i) => `
         <div class="dynamic-q-box">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-            <strong>سؤال ${i+1}</strong>
-            <button type="button" class="remove-q-btn" onclick="removeQuestionUI(${i})">حذف</button>
-          </div>
-          <div class="input-group"><label>نص السؤال</label><input type="text" value="${escapeHtml(q.q)}" oninput="updateQuestion(${i},'q',this.value)" placeholder="اكتب السؤال هنا..."/></div>
-          <div class="input-group"><label>نوع السؤال</label><select onchange="updateQuestion(${i},'type',this.value)">
-            <option value="mc" ${q.type==='mc'?'selected':''}>اختيار من متعدد</option>
-            <option value="tf" ${q.type==='tf'?'selected':''}>صح أو خطأ</option>
-          </select></div>
-          <div class="quiz-options" style="margin-bottom:10px">
-            ${q.options.map((opt, j) => `
-              <div style="display:flex;align-items:center;gap:8px">
-                <input type="radio" name="correct_${i}" ${q.correct==j?'checked':''} onchange="updateQuestion(${i},'correct',${j})" style="width:20px;height:20px;accent-color:var(--success)">
-                ${q.type==='tf' ? `<span style="flex:1;font-weight:700">${opt}</span>` : `<input type="text" value="${escapeHtml(opt)}" oninput="updateOption(${i},${j},this.value)" placeholder="الخيار ${j+1}" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text)">`}
-              </div>
-            `).join('')}
-          </div>
-          <div class="input-group"><label>تفسير الإجابة الصحيحة (يظهر للطالب بعد الحل)</label><input type="text" value="${escapeHtml(q.explanation)}" oninput="updateQuestion(${i},'explanation',this.value)" placeholder="لماذا هذه الإجابة صحيحة؟"/></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>سؤال ${i+1}</strong><button type="button" class="remove-q-btn" onclick="removeQuestionUI(${i})">حذف</button></div>
+          <div class="input-group"><label>النص</label><input type="text" value="${escapeHtml(q.q)}" oninput="updateQuestion(${i},'q',this.value)"/></div>
+          <div class="input-group"><label>النوع</label><select onchange="updateQuestion(${i},'type',this.value)"><option value="mc" ${q.type==='mc'?'selected':''}>اختيار</option><option value="tf" ${q.type==='tf'?'selected':''}>صح/خطأ</option></select></div>
+          <div class="quiz-options" style="margin-bottom:10px">${q.options.map((opt, j) => `<div style="display:flex;align-items:center;gap:8px"><input type="radio" name="correct_${i}" ${q.correct==j?'checked':''} onchange="updateQuestion(${i},'correct',${j})" style="width:20px;height:20px">${q.type==='tf' ? `<span style="flex:1;font-weight:700">${opt}</span>` : `<input type="text" value="${escapeHtml(opt)}" oninput="updateOption(${i},${j},this.value)" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text)">`}</div>`).join('')}</div>
+          <div class="input-group"><label>التفسير</label><input type="text" value="${escapeHtml(q.explanation)}" oninput="updateQuestion(${i},'explanation',this.value)"/></div>
         </div>
       `).join('');
     }
@@ -734,15 +855,11 @@
     window.startAssignment=async function(id){
       const {data:a}=await sb.from('assignments').select('*').eq('id',id).single();
       const {data:ex}=await sb.from('submissions').select('*').eq('assignment_id',id).eq('user_id',currentProfile.id).maybeSingle();
-      if(ex){toast(`⚠️ حليت هذا الواجب سابقاً. درجاتك: ${ex.score}`,'warning');return;}
+      if(ex){toast(`⚠️ درجاتك: ${ex.score}`,'warning');return;}
       const qs=a.questions||[];
-      let html=`<h2>${escapeHtml(a.title)}</h2><p class="muted" style="margin-bottom:18px">${escapeHtml(a.description||'')}</p><form id="quizForm">`;
-      qs.forEach((q,i)=>{
-        html+=`<div class="quiz-question"><h4>س${i+1}: ${escapeHtml(q.q)}</h4><div class="quiz-options">
-          ${(q.options||[]).map((o,j)=>`<button type="button" class="quiz-option" data-q="${i}" data-opt="${j}" onclick="pickOption(this)">${escapeHtml(o)}</button>`).join('')}
-          </div><div class="quiz-explanation" id="exp-${i}"></div></div>`;
-      });
-      html+=`<button type="submit" class="btn-primary">تسليم الواجب</button></form>`;
+      let html=`<h2>${escapeHtml(a.title)}</h2><form id="quizForm">`;
+      qs.forEach((q,i)=>{html+=`<div class="quiz-question"><h4>س${i+1}: ${escapeHtml(q.q)}</h4><div class="quiz-options">${(q.options||[]).map((o,j)=>`<button type="button" class="quiz-option" data-q="${i}" data-opt="${j}" onclick="pickOption(this)">${escapeHtml(o)}</button>`).join('')}</div><div class="quiz-explanation" id="exp-${i}"></div></div>`;});
+      html+=`<button type="submit" class="btn-primary">تسليم</button></form>`;
       openModal(html);
       window.pickOption=function(btn){ btn.parentElement.querySelectorAll('.quiz-option').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); };
       $('#quizForm').addEventListener('submit', async e=>{
@@ -752,75 +869,68 @@
         qs.forEach((q,i)=>{
           const sel=document.querySelector(`.quiz-option[data-q="${i}"].selected`);
           const ans=sel?parseInt(sel.dataset.opt):-1; answers.push(ans);
-          document.querySelectorAll(`.quiz-option[data-q="${i}"]`).forEach((o,j)=>{
-            if(j===q.correct)o.classList.add('correct'); else if(j===ans)o.classList.add('wrong');
-          });
+          document.querySelectorAll(`.quiz-option[data-q="${i}"]`).forEach((o,j)=>{ if(j===q.correct)o.classList.add('correct'); else if(j===ans)o.classList.add('wrong'); });
           if(ans===q.correct)score++;
           if(q.explanation){const el=$(`#exp-${i}`);el.textContent='💡 '+q.explanation;el.classList.add('show');}
         });
         await sb.from('submissions').insert({assignment_id:id,user_id:currentProfile.id,answers,score});
-        await addPoints(currentProfile.id, score*5);
-        toast(`🎉 ${score}/${qs.length} — حصلت على ${score*5} نقطة!`,'success');
-        e.target.querySelector('button[type=submit]').textContent='تم التسليم ✔️';
+        toast(`🎉 ${score}/${qs.length}`,'success');
+        e.target.querySelector('button[type=submit]').textContent='تم ✔️';
       });
     };
+
     window.deleteAssignment=async function(id){ if(!confirm('حذف؟'))return; await sb.from('assignments').delete().eq('id',id); toast('🗑️','success'); renderMaterials(); };
 
-    // ================= EXAMS (Reusing Dynamic Quiz Logic conceptually, simplified for brevity) =================
-    // (For exams, we will keep the JSON for now to save space, but teachers can use an external JSON generator, OR we can apply the same dynamic UI. Let's apply a simplified dynamic UI for exams too).
     async function renderExams(){
       const area=$('#contentArea'); const staff=isStaff();
       const {data:exams}=await sb.from('exams').select('*').order('id',{ascending:false});
-      const addBtn=staff?`<button class="btn btn-primary-solid" onclick="openExamModal()">+ امتحان جديد</button>`:'';
-      const body=(!exams||!exams.length)?`<div class="empty-state"><div class="icon">📝</div><p>لا توجد امتحانات</p></div>`:`<div class="grid">${exams.map(e=>`<div class="item-card">
-        <h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.description||'')}</p>
-        <div class="item-meta"><span class="badge badge-info">⏱️ ${e.duration_minutes||30} دقيقة</span></div>
-        <div class="btn-group"><button class="btn btn-primary-solid btn-sm" onclick="startExam(${e.id})">ابدأ</button>${staff?`<button class="btn btn-danger btn-sm" onclick="deleteExam(${e.id})">🗑️</button>`:''}</div></div>`).join('')}</div>`;
+      const addBtn=staff?`<button class="btn btn-primary-solid" onclick="openExamModal()">+ امتحان</button>`:'';
+      const body=(!exams||!exams.length)?`<div class="empty-state"><div class="icon">📝</div><p>لا توجد امتحانات</p></div>`:`<div class="grid">${exams.map(e=>`<div class="item-card"><h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.description||'')}</p><div class="item-meta"><span class="badge badge-info">⏱️ ${e.duration_minutes||30} دقيقة</span></div><div class="btn-group"><button class="btn btn-primary-solid btn-sm" onclick="startExam(${e.id})">ابدأ</button>${staff?`<button class="btn btn-danger btn-sm" onclick="deleteExam(${e.id})">🗑️</button>`:''}</div></div>`).join('')}</div>`;
       area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">📝 الامتحانات</h3>${addBtn}</div>${body}</div>`;
     }
+
     window.openExamModal=function(){
-      // Reusing the exact same dynamic quiz builder logic for exams to keep it user-friendly
       currentQuestions = [];
       openModal(`<h2>📝 إنشاء امتحان</h2><form id="examCreateForm">
         <div class="input-group"><label>العنوان</label><input type="text" id="examTitle" required/></div>
         <div class="input-group"><label>المدة (دقائق)</label><input type="number" id="examDuration" value="30" min="1"/></div>
         <div id="examQuestionsContainer"></div>
         <button type="button" class="btn btn-outline" style="width:100%; margin-bottom:15px" onclick="addExamQuestionUI()">+ إضافة سؤال</button>
-        <button type="submit" class="btn-primary">حفظ الامتحان</button></form>`);
+        <button type="submit" class="btn-primary">حفظ</button></form>`);
       renderExamQuestionsUI();
       $('#examCreateForm').addEventListener('submit', async e=>{
         e.preventDefault();
         if(currentQuestions.length === 0) { toast('⚠️ أضف سؤالاً','warning'); return; }
-        const {error}=await sb.from('exams').insert({title:$('#examTitle').value.trim(),duration_minutes:parseInt($('#examDuration').value)||30,questions:currentQuestions,created_by:currentProfile.id});
-        if(error){toast('❌ '+error.message,'error');return;}
-        toast('✅ تم','success'); closeModal(); renderExams();
+        await sb.from('exams').insert({title:$('#examTitle').value.trim(),duration_minutes:parseInt($('#examDuration').value)||30,questions:currentQuestions,created_by:currentProfile.id});
+        toast('✅','success'); closeModal(); renderExams();
       });
     };
+
     window.addExamQuestionUI = function(){ currentQuestions.push({ q: '', type: 'mc', options: ['','','',''], correct: 0, explanation: '' }); renderExamQuestionsUI(); };
     window.removeExamQuestionUI = function(idx){ currentQuestions.splice(idx, 1); renderExamQuestionsUI(); };
     window.updateExamQuestion = function(idx, field, value){
       currentQuestions[idx][field] = value;
-      if(field === 'type' && value === 'tf') { currentQuestions[idx].options = ['صح ✅', 'خطأ ❌']; currentQuestions[idx].correct = 0; } 
+      if(field === 'type' && value === 'tf') { currentQuestions[idx].options = ['صح ✅', 'خطأ ❌']; currentQuestions[idx].correct = 0; }
       else if (field === 'type' && value === 'mc') { currentQuestions[idx].options = ['','','','']; currentQuestions[idx].correct = 0; }
       renderExamQuestionsUI();
     };
     window.updateExamOption = function(qIdx, optIdx, value){ currentQuestions[qIdx].options[optIdx] = value; };
+
     function renderExamQuestionsUI(){
       const container = $('#examQuestionsContainer');
       container.innerHTML = currentQuestions.map((q, i) => `
         <div class="dynamic-q-box">
           <div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>سؤال ${i+1}</strong><button type="button" class="remove-q-btn" onclick="removeExamQuestionUI(${i})">حذف</button></div>
-          <div class="input-group"><label>نص السؤال</label><input type="text" value="${escapeHtml(q.q)}" oninput="updateExamQuestion(${i},'q',this.value)"/></div>
-          <div class="input-group"><label>النوع</label><select onchange="updateExamQuestion(${i},'type',this.value)"><option value="mc" ${q.type==='mc'?'selected':''}>اختيار من متعدد</option><option value="tf" ${q.type==='tf'?'selected':''}>صح أو خطأ</option></select></div>
-          <div class="quiz-options" style="margin-bottom:10px">
-            ${q.options.map((opt, j) => `<div style="display:flex;align-items:center;gap:8px"><input type="radio" name="ecorrect_${i}" ${q.correct==j?'checked':''} onchange="updateExamQuestion(${i},'correct',${j})" style="width:20px;height:20px;accent-color:var(--success)">${q.type==='tf' ? `<span style="flex:1;font-weight:700">${opt}</span>` : `<input type="text" value="${escapeHtml(opt)}" oninput="updateExamOption(${i},${j},this.value)" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text)">`}</div>`).join('')}
-          </div>
+          <div class="input-group"><label>النص</label><input type="text" value="${escapeHtml(q.q)}" oninput="updateExamQuestion(${i},'q',this.value)"/></div>
+          <div class="input-group"><label>النوع</label><select onchange="updateExamQuestion(${i},'type',this.value)"><option value="mc" ${q.type==='mc'?'selected':''}>اختيار</option><option value="tf" ${q.type==='tf'?'selected':''}>صح/خطأ</option></select></div>
+          <div class="quiz-options" style="margin-bottom:10px">${q.options.map((opt, j) => `<div style="display:flex;align-items:center;gap:8px"><input type="radio" name="ecorrect_${i}" ${q.correct==j?'checked':''} onchange="updateExamQuestion(${i},'correct',${j})" style="width:20px;height:20px">${q.type==='tf' ? `<span style="flex:1;font-weight:700">${opt}</span>` : `<input type="text" value="${escapeHtml(opt)}" oninput="updateExamOption(${i},${j},this.value)" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text)">`}</div>`).join('')}</div>
         </div>`).join('');
     }
+
     window.startExam=async function(id){
       const {data:exam}=await sb.from('exams').select('*').eq('id',id).single();
       const {data:ex}=await sb.from('exam_attempts').select('*').eq('exam_id',id).eq('user_id',currentProfile.id).maybeSingle();
-      if(ex){toast(`⚠️ درجاتك السابقة: ${ex.score}`,'warning');return;}
+      if(ex){toast(`⚠️ درجاتك: ${ex.score}`,'warning');return;}
       const qs=exam.questions||[]; const dur=(exam.duration_minutes||30)*60*1000; const t0=Date.now();
       let html=`<h2>${escapeHtml(exam.title)}</h2><div style="background:var(--grad);color:#fff;padding:10px;border-radius:11px;text-align:center;margin-bottom:18px;font-weight:900">⏱️ <span id="examTimer">${exam.duration_minutes||30}:00</span></div><form id="examRunForm">`;
       qs.forEach((q,i)=>{html+=`<div class="quiz-question"><h4>س${i+1}: ${escapeHtml(q.q)}</h4><div class="quiz-options">${(q.options||[]).map((o,j)=>`<button type="button" class="quiz-option" data-q="${i}" data-opt="${j}" onclick="pickOption(this)">${escapeHtml(o)}</button>`).join('')}</div></div>`;});
@@ -837,540 +947,113 @@
         const answers=[]; let score=0;
         qs.forEach((q,i)=>{ const sel=document.querySelector(`.quiz-option[data-q="${i}"].selected`); const ans=sel?parseInt(sel.dataset.opt):-1; answers.push(ans); if(ans===q.correct)score++; });
         await sb.from('exam_attempts').insert({exam_id:id,user_id:currentProfile.id,answers,score,finished_at:new Date().toISOString()});
-        await addPoints(currentProfile.id, score*10);
-        toast(`🎉 ${score}/${qs.length} — +${score*10} نقطة!`,'success'); closeModal(); renderExams();
+        toast(`🎉 ${score}/${qs.length}`,'success'); closeModal(); renderExams();
       });
     };
+
     window.deleteExam=async function(id){ if(!confirm('حذف؟'))return; await sb.from('exams').delete().eq('id',id); toast('🗑️','success'); renderExams(); };
 
-    // ================= PROJECTS =================
     async function renderProjects(){
       const area=$('#contentArea'); const staff=isStaff();
       const {data:projs}=await sb.from('projects').select('*').order('id',{ascending:false});
-      const addBtn=staff?`<button class="btn btn-primary-solid" onclick="openProjectModal()">+ بروجيكت جديد</button>`:'';
-      const body=(!projs||!projs.length)?`<div class="empty-state"><div class="icon">🎯</div><p>لا توجد بروجيكتات</p></div>`:`<div class="grid">${projs.map(p=>`<div class="item-card">
-        <div class="item-card-header"><span class="badge badge-primary">ترم ${escapeHtml(p.term)}</span></div>
-        <h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.description||'')}</p>
-        ${p.deadline?`<div class="item-meta"><span class="badge badge-warning">⏰ ${formatDate(p.deadline)}</span></div>`:''}
-        <div class="btn-group"><button class="btn btn-primary-solid btn-sm" onclick="submitProject(${p.id})">تسليم</button>${staff?`<button class="btn btn-outline btn-sm" onclick="viewProjectSubmissions(${p.id})">👁️ عرض التسليمات</button><button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id})">🗑️</button>`:''}</div></div>`).join('')}</div>`;
+      const addBtn=staff?`<button class="btn btn-primary-solid" onclick="openProjectModal()">+ بروجيكت</button>`:'';
+      const body=(!projs||!projs.length)?`<div class="empty-state"><div class="icon">🎯</div><p>لا توجد بروجيكتات</p></div>`:`<div class="grid">${projs.map(p=>`<div class="item-card"><div class="item-card-header"><span class="badge badge-primary">ترم ${escapeHtml(p.term)}</span></div><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.description||'')}</p>${p.deadline?`<div class="item-meta"><span class="badge badge-warning">⏰ ${formatDate(p.deadline)}</span></div>`:''}<div class="btn-group"><button class="btn btn-primary-solid btn-sm" onclick="submitProject(${p.id})">تسليم</button>${staff?`<button class="btn btn-outline btn-sm" onclick="viewProjectSubmissions(${p.id})">👁️</button><button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id})">🗑️</button>`:''}</div></div>`).join('')}</div>`;
       area.innerHTML=`<div class="card"><div class="card-header"><h3 class="card-title">🎯 البروجيكت</h3>${addBtn}</div>${body}</div>`;
     }
+
     window.openProjectModal=function(){
       openModal(`<h2>🎯 بروجيكت جديد</h2><form id="projForm">
         <div class="input-group"><label>الترم</label><select id="projTerm"><option value="1">الأول</option><option value="2">الثاني</option></select></div>
         <div class="input-group"><label>العنوان</label><input type="text" id="projTitle" required/></div>
         <div class="input-group"><label>الوصف</label><textarea id="projDesc" rows="4"></textarea></div>
-        <div class="input-group"><label>الموعد النهائي</label><input type="datetime-local" id="projDeadline"/></div>
+        <div class="input-group"><label>الموعد</label><input type="datetime-local" id="projDeadline"/></div>
         <button type="submit" class="btn-primary">إنشاء</button></form>`);
       $('#projForm').addEventListener('submit', async e=>{
         e.preventDefault();
-        const {error}=await sb.from('projects').insert({term:$('#projTerm').value,title:$('#projTitle').value.trim(),description:$('#projDesc').value.trim(),deadline:$('#projDeadline').value?new Date($('#projDeadline').value).toISOString():null,created_by:currentProfile.id});
-        if(error){toast('❌ '+error.message,'error');return;}
-        toast('✅ تم','success'); closeModal(); renderProjects();
+        await sb.from('projects').insert({term:$('#projTerm').value,title:$('#projTitle').value.trim(),description:$('#projDesc').value.trim(),deadline:$('#projDeadline').value?new Date($('#projDeadline').value).toISOString():null,created_by:currentProfile.id});
+        toast('✅','success'); closeModal(); renderProjects();
       });
     };
+
     window.submitProject=async function(id){
       const {data:ex}=await sb.from('project_submissions').select('*').eq('project_id',id).eq('user_id',currentProfile.id).maybeSingle();
       if(ex){toast('⚠️ سلّمت مسبقاً','warning');return;}
-      openModal(`<h2>📤 تسليم البروجيكت</h2><form id="submitProjForm">
-        <div class="input-group"><label>محتوى التسليم</label><textarea id="projContent" rows="6" required></textarea></div>
-        <div class="input-group"><label>روابط الملفات (اختياري)</label><textarea id="projFiles" rows="3" placeholder="https://..."></textarea></div>
-        <button type="submit" class="btn-primary">تسليم (+50 نقطة)</button></form>`);
+      openModal(`<h2>📤 تسليم</h2><form id="submitProjForm">
+        <div class="input-group"><label>المحتوى</label><textarea id="projContent" rows="6" required></textarea></div>
+        <div class="input-group"><label>روابط (اختياري)</label><textarea id="projFiles" rows="3"></textarea></div>
+        <button type="submit" class="btn-primary">تسليم</button></form>`);
       $('#submitProjForm').addEventListener('submit', async e=>{
         e.preventDefault();
         const files=$('#projFiles').value.split('\n').map(f=>f.trim()).filter(Boolean);
-        const {error}=await sb.from('project_submissions').insert({project_id:id,user_id:currentProfile.id,content:$('#projContent').value.trim(),files});
-        if(error){toast('❌ '+error.message,'error');return;}
-        await addPoints(currentProfile.id,50);
-        toast('🎉 تم التسليم! +50 نقطة','success'); closeModal();
+        await sb.from('project_submissions').insert({project_id:id,user_id:currentProfile.id,content:$('#projContent').value.trim(),files});
+        toast('🎉 تم','success'); closeModal();
       });
     };
+
     window.viewProjectSubmissions=async function(id){
       const {data:subs} = await sb.from('project_submissions').select('*, profiles(full_name)').eq('project_id', id).order('submitted_at', {ascending: false});
-      if(!subs || subs.length === 0) { toast('لا توجد تسليمات بعد','warning'); return; }
-      openModal(`<h2>📥 تسليمات البروجيكت</h2><div style="max-height:400px;overflow-y:auto">
-        ${subs.map(s => `<div class="announcement-card"><div class="announcement-header"><div class="announcement-title">👤 ${escapeHtml(s.profiles?.full_name || 'طالب')}</div><div class="announcement-date">${formatDate(s.submitted_at)}</div></div>
-        <div class="announcement-content">${escapeHtml(s.content)}</div>
-        ${s.files && s.files.length ? `<div style="margin-top:8px"><strong>ملفات:</strong><br>${s.files.map(f=>`<a href="${f}" target="_blank" style="color:var(--accent)">${f}</a>`).join('<br>')}</div>` : ''}</div>`).join('')}
-      </div>`);
+      if(!subs || subs.length === 0) { toast('لا توجد تسليمات','warning'); return; }
+      openModal(`<h2>📥 التسليمات</h2><div style="max-height:400px;overflow-y:auto">${subs.map(s => `<div class="announcement-card"><div class="announcement-header"><div class="announcement-title">👤 ${escapeHtml(s.profiles?.full_name || 'طالب')}</div><div class="announcement-date">${formatDate(s.submitted_at)}</div></div><div class="announcement-content">${escapeHtml(s.content)}</div></div>`).join('')}</div>`);
     };
+
     window.deleteProject=async function(id){ if(!confirm('حذف؟'))return; await sb.from('projects').delete().eq('id',id); toast('🗑️','success'); renderProjects(); };
 
-    // ================= SUPPORT (Role-based visibility) =================
     async function renderSupport(){
       const area=$('#contentArea'); const admin=currentProfile.role==='admin'; const teacher=currentProfile.role==='teacher';
       let q=sb.from('support_tickets').select('*, profiles(full_name)').order('created_at',{ascending:false});
-      // Students see only theirs, Teachers/Admin see ALL
       if(!admin && !teacher) q=q.eq('user_id',currentProfile.id);
-      
       const {data:tickets}=await q;
       let html=`<div class="card"><div class="card-header"><h3 class="card-title">💬 رسالة جديدة</h3></div><form id="ticketForm">
-        <div class="input-group"><label>النوع</label><select id="ticketType"><option value="support">دعم فني 🛠️</option><option value="suggestion">اقتراح 💡</option></select></div>
+        <div class="input-group"><label>النوع</label><select id="ticketType"><option value="support">دعم 🛠️</option><option value="suggestion">اقتراح 💡</option></select></div>
         <div class="input-group"><label>الموضوع</label><input type="text" id="ticketSubject" required/></div>
         <div class="input-group"><label>الرسالة</label><textarea id="ticketMessage" rows="4" required></textarea></div>
         <button type="submit" class="btn-primary">إرسال</button></form></div>`;
       if(tickets&&tickets.length){
-        html+=`<div class="card"><div class="card-header"><h3 class="card-title">📋 سجل الرسائل ${admin||teacher?'(الكل)':''}</h3></div>${tickets.map(t=>`
-          <div class="announcement-card"><div class="announcement-header"><div class="announcement-title">${t.type==='suggestion'?'💡':'🛠️'} ${escapeHtml(t.subject)} ${admin||teacher?`<span class="badge badge-info" style="margin-right:8px">${escapeHtml(t.profiles?.full_name)}</span>`:''}</div><div class="announcement-date">${formatDate(t.created_at)}</div></div>
-          <div class="announcement-content">${escapeHtml(t.message)}</div>
-          ${t.response?`<div style="margin-top:10px;padding:10px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:9px"><strong>✅ الرد:</strong> ${escapeHtml(t.response)}</div>`:''}
-          ${(admin||teacher)&&!t.response?`<button class="btn btn-primary-solid btn-sm" style="margin-top:10px" onclick="replyTicket(${t.id})">الرد</button>`:''}</div>`).join('')}</div>`;
+        html+=`<div class="card"><div class="card-header"><h3 class="card-title">📋 الرسائل</h3></div>${tickets.map(t=>`<div class="announcement-card"><div class="announcement-header"><div class="announcement-title">${t.type==='suggestion'?'💡':'🛠️'} ${escapeHtml(t.subject)} ${admin||teacher?`<span class="badge badge-info" style="margin-right:8px">${escapeHtml(t.profiles?.full_name)}</span>`:''}</div><div class="announcement-date">${formatDate(t.created_at)}</div></div><div class="announcement-content">${escapeHtml(t.message)}</div>${t.response?`<div style="margin-top:10px;padding:10px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:9px"><strong>✅ الرد:</strong> ${escapeHtml(t.response)}</div>`:''}${(admin||teacher)&&!t.response?`<button class="btn btn-primary-solid btn-sm" style="margin-top:10px" onclick="replyTicket(${t.id})">الرد</button>`:''}</div>`).join('')}</div>`;
       }
       area.innerHTML=html;
       $('#ticketForm').addEventListener('submit', async e=>{
         e.preventDefault();
-        const {error}=await sb.from('support_tickets').insert({user_id:currentProfile.id,type:$('#ticketType').value,subject:$('#ticketSubject').value.trim(),message:$('#ticketMessage').value.trim()});
-        if(error){toast('❌ '+error.message,'error');return;}
-        toast('✅ تم الإرسال','success'); renderSupport();
+        await sb.from('support_tickets').insert({user_id:currentProfile.id,type:$('#ticketType').value,subject:$('#ticketSubject').value.trim(),message:$('#ticketMessage').value.trim()});
+        toast('✅','success'); renderSupport();
       });
     }
+
     window.replyTicket=async function(id){
-      openModal(`<h2>💬 الرد</h2><form id="replyForm">
-        <div class="input-group"><label>الرد</label><textarea id="replyText" rows="5" required></textarea></div>
-        <button type="submit" class="btn-primary">إرسال الرد</button></form>`);
+      openModal(`<h2>💬 الرد</h2><form id="replyForm"><div class="input-group"><label>الرد</label><textarea id="replyText" rows="5" required></textarea></div><button type="submit" class="btn-primary">إرسال</button></form>`);
       $('#replyForm').addEventListener('submit', async e=>{
         e.preventDefault();
         await sb.from('support_tickets').update({response:$('#replyText').value.trim(),status:'closed'}).eq('id',id);
-        toast('✅ تم الرد','success'); closeModal(); renderSupport();
-      });
-    };
-    //gg
-    // ================= ANNOUNCEMENTS MANAGEMENT =================
-    async function renderAnnouncements(){
-      const area = $('#contentArea');
-
-      if(!isStaff()){
-        area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>';
-        return;
-      }
-
-      area.innerHTML = '<div class="empty-state"><span class="loader"></span><p style="margin-top:12px">جاري تحميل الإعلانات...</p></div>';
-
-      const { data, error } = await sb
-        .from('announcements')
-        .select('*')
-        .order('created_at', { ascending:false });
-
-      if(error){
-        area.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${escapeHtml(error.message)}</p></div>`;
-        return;
-      }
-
-      const announcements = data || [];
-
-      const body = announcements.length ? announcements.map(a => `
-        <div class="announcement-card ${a.type === 'urgent' ? 'urgent' : ''}">
-          <div class="announcement-header">
-            <div class="announcement-title">
-              ${a.type === 'urgent' ? '🚨' : a.type === 'opportunity' ? '🌟' : '📢'}
-              ${escapeHtml(a.title)}
-            </div>
-            <div class="announcement-date">${formatDate(a.created_at)}</div>
-          </div>
-          <div class="announcement-content">${escapeHtml(a.content || '')}</div>
-          <div style="margin-top:12px">
-            <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement(${a.id})">🗑️ حذف الإعلان</button>
-          </div>
-        </div>
-      `).join('') : `
-        <div class="empty-state">
-          <div class="icon">📢</div>
-          <p>لا توجد إعلانات حالياً</p>
-        </div>
-      `;
-
-      area.innerHTML = `
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">📢 إدارة الإعلانات</h3>
-            <button class="btn btn-primary-solid" onclick="openAnnouncementModal()">➕ إضافة إعلان</button>
-          </div>
-          ${body}
-        </div>
-      `;
-    }
-
-    window.openAnnouncementModal = function(){
-      openModal(`
-        <h2>📢 إضافة إعلان جديد</h2>
-        <form id="announcementForm">
-          <div class="input-group">
-            <label>عنوان الإعلان</label>
-            <input type="text" id="annTitle" required placeholder="مثال: مسابقة أفضل طالب في اللغة الإنجليزية">
-          </div>
-
-          <div class="input-group">
-            <label>نص الإعلان</label>
-            <textarea id="annContent" rows="5" required placeholder="اكتب تفاصيل الإعلان هنا..."></textarea>
-          </div>
-
-          <div class="input-group">
-            <label>نوع الإعلان</label>
-            <select id="annType">
-              <option value="general">عام</option>
-              <option value="urgent">عاجل</option>
-              <option value="opportunity">فرصة / مسابقة</option>
-            </select>
-          </div>
-
-          <button type="submit" class="btn-primary">نشر الإعلان</button>
-        </form>
-      `);
-
-      $('#announcementForm').addEventListener('submit', async e => {
-        e.preventDefault();
-
-        const { error } = await sb.from('announcements').insert({
-          title: $('#annTitle').value.trim(),
-          content: $('#annContent').value.trim(),
-          type: $('#annType').value,
-          created_by: currentProfile.id
-        });
-
-        if(error){
-          toast('❌ ' + error.message, 'error');
-          return;
-        }
-
-        toast('✅ تم نشر الإعلان', 'success');
-        closeModal();
-        renderAnnouncements();
+        toast('✅','success'); closeModal(); renderSupport();
       });
     };
 
-    window.deleteAnnouncement = async function(id){
-      if(!confirm('هل تريد حذف هذا الإعلان؟')) return;
-
-      const { error } = await sb.from('announcements').delete().eq('id', id);
-
-      if(error){
-        toast('❌ ' + error.message, 'error');
-        return;
-      }
-
-      toast('🗑️ تم حذف الإعلان', 'success');
-      renderAnnouncements();
-    };
-
-
-    // ================= BADGES MANAGEMENT =================
-    async function renderBadges(){
-      const area = $('#contentArea');
-
-      if(!isStaff()){
-        area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>';
-        return;
-      }
-
-      area.innerHTML = '<div class="empty-state"><span class="loader"></span><p style="margin-top:12px">جاري تحميل الأوسمة...</p></div>';
-
-      const { data, error } = await sb
-        .from('badges')
-        .select('*')
-        .order('id', { ascending:false });
-
-      if(error){
-        area.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>${escapeHtml(error.message)}</p></div>`;
-        return;
-      }
-
-      const badges = data || [];
-
-      const body = badges.length ? `
-        <div class="grid">
-          ${badges.map(b => `
-            <div class="item-card" style="text-align:center">
-              <div style="font-size:46px;margin-bottom:10px">${escapeHtml(b.icon || '🏅')}</div>
-              <h3>${escapeHtml(b.name)}</h3>
-              <p>${escapeHtml(b.description || 'بدون وصف')}</p>
-              <div class="item-meta" style="justify-content:center">
-                <span class="badge badge-warning">⭐ ${b.points || 0} نقطة</span>
-              </div>
-              <div class="btn-group">
-                <button class="btn btn-success btn-sm" onclick="openAwardModal(${b.id})">🎖️ منح لطالب</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteBadge(${b.id})">🗑️ حذف</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      ` : `
-        <div class="empty-state">
-          <div class="icon">🎖️</div>
-          <p>لا توجد أوسمة حالياً</p>
-        </div>
-      `;
-
-      area.innerHTML = `
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">🎖️ إدارة الأوسمة</h3>
-            <div class="btn-group">
-              <button class="btn btn-primary-solid" onclick="openBadgeModal()">➕ إضافة وسام</button>
-              <button class="btn btn-success" onclick="openAwardModal()">🎁 منح وسام لطالب</button>
-            </div>
-          </div>
-          ${body}
-        </div>
-      `;
-    }
-
-    window.openBadgeModal = function(){
-      openModal(`
-        <h2>🎖️ إضافة وسام جديد</h2>
-        <form id="badgeForm">
-          <div class="input-group">
-            <label>اسم الوسام</label>
-            <input type="text" id="badgeName" required placeholder="مثال: بطل القراءة">
-          </div>
-
-          <div class="input-group">
-            <label>الأيقونة</label>
-            <input type="text" id="badgeIcon" value="🏅" placeholder="مثال: 🏅 🥇 🌟">
-          </div>
-
-          <div class="input-group">
-            <label>عدد النقاط</label>
-            <input type="number" id="badgePoints" value="10" min="0">
-          </div>
-
-          <div class="input-group">
-            <label>وصف الوسام</label>
-            <textarea id="badgeDesc" rows="3" placeholder="متى يحصل الطالب على هذا الوسام؟"></textarea>
-          </div>
-
-          <button type="submit" class="btn-primary">حفظ الوسام</button>
-        </form>
-      `);
-
-      $('#badgeForm').addEventListener('submit', async e => {
-        e.preventDefault();
-
-        const { error } = await sb.from('badges').insert({
-          name: $('#badgeName').value.trim(),
-          icon: $('#badgeIcon').value.trim() || '🏅',
-          points: parseInt($('#badgePoints').value) || 0,
-          description: $('#badgeDesc').value.trim()
-        });
-
-        if(error){
-          toast('❌ ' + error.message, 'error');
-          return;
-        }
-
-        toast('✅ تم إضافة الوسام', 'success');
-        closeModal();
-        renderBadges();
-      });
-    };
-
-    window.openAwardModal = async function(preselectedBadgeId = null){
-      const [badgesRes, studentsRes] = await Promise.all([
-        sb.from('badges').select('*').order('name'),
-        sb.from('profiles').select('*').eq('role','student').order('full_name')
-      ]);
-
-      const badges = badgesRes.data || [];
-      const students = studentsRes.data || [];
-
-      if(!badges.length){
-        toast('⚠️ أضف وسام الأول', 'warning');
-        return;
-      }
-
-      if(!students.length){
-        toast('⚠️ لا يوجد طلاب', 'warning');
-        return;
-      }
-
-      openModal(`
-        <h2>🎁 منح وسام لطالب</h2>
-        <form id="awardForm">
-          <div class="input-group">
-            <label>اختر الطالب</label>
-            <select id="awardStudent" required>
-              ${students.map(s => `
-                <option value="${s.id}">${escapeHtml(s.full_name || s.email)}</option>
-              `).join('')}
-            </select>
-          </div>
-
-          <div class="input-group">
-            <label>اختر الوسام</label>
-            <select id="awardBadge" required>
-              ${badges.map(b => `
-                <option value="${b.id}" ${preselectedBadgeId == b.id ? 'selected' : ''}>
-                  ${escapeHtml(b.icon || '🏅')} ${escapeHtml(b.name)} - ${b.points || 0} نقطة
-                </option>
-              `).join('')}
-            </select>
-          </div>
-
-          <div class="input-group">
-            <label>العدد</label>
-            <input type="number" id="awardQty" value="1" min="1">
-          </div>
-
-          <button type="submit" class="btn-primary">منح الوسام</button>
-        </form>
-      `);
-
-      $('#awardForm').addEventListener('submit', async e => {
-        e.preventDefault();
-
-        const studentId = $('#awardStudent').value;
-        const badgeId = parseInt($('#awardBadge').value);
-        const qty = parseInt($('#awardQty').value) || 1;
-
-        const { data: badge, error: badgeError } = await sb
-          .from('badges')
-          .select('*')
-          .eq('id', badgeId)
-          .single();
-
-        if(badgeError || !badge){
-          toast('❌ لم يتم العثور على الوسام', 'error');
-          return;
-        }
-
-        const { data: existing } = await sb
-          .from('user_badges')
-          .select('*')
-          .eq('user_id', studentId)
-          .eq('badge_id', badgeId)
-          .maybeSingle();
-
-        if(existing){
-          const { error } = await sb
-            .from('user_badges')
-            .update({ quantity: (existing.quantity || 0) + qty })
-            .eq('id', existing.id);
-
-          if(error){
-            toast('❌ ' + error.message, 'error');
-            return;
-          }
-        } else {
-          const { error } = await sb.from('user_badges').insert({
-            user_id: studentId,
-            badge_id: badgeId,
-            quantity: qty
-          });
-
-          if(error){
-            toast('❌ ' + error.message, 'error');
-            return;
-          }
-        }
-
-        await addPoints(studentId, (badge.points || 0) * qty);
-
-        toast(`✅ تم منح الوسام وإضافة ${(badge.points || 0) * qty} نقطة`, 'success');
-        closeModal();
-        renderBadges();
-      });
-    };
-
-    window.deleteBadge = async function(id){
-      if(!confirm('هل تريد حذف هذا الوسام؟')) return;
-
-      const { error } = await sb.from('badges').delete().eq('id', id);
-
-      if(error){
-        toast('❌ ' + error.message, 'error');
-        return;
-      }
-
-      toast('🗑️ تم حذف الوسام', 'success');
-      renderBadges();
-    };
-    //gg
-    function showPasswordChangeWarning(){
-      openModal(`
-        <h2 style="color:var(--warning);text-align:center">⚠️ تنبيه أمني</h2>
-        <div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);padding:16px;border-radius:10px;margin-bottom:20px">
-          <p style="font-size:14px;line-height:1.8;color:#fcd34d">
-            حسابك حالياً يستخدم <strong>كلمة مرور افتراضية</strong>.<br>
-            لحماية حسابك من السرقة، يجب تغيير كلمة المرور الآن.
-          </p>
-        </div>
-        <form id="forceChangePassForm">
-          <div class="input-group">
-            <label>كلمة المرور الجديدة</label>
-            <input type="password" id="forceNewPass" minlength="6" required placeholder="6 أحرف على الأقل"/>
-          </div>
-          <div class="input-group">
-            <label>تأكيد كلمة المرور</label>
-            <input type="password" id="forceConfirmPass" minlength="6" required placeholder="أعد كتابة كلمة المرور"/>
-          </div>
-          <button type="submit" class="btn-primary">تغيير كلمة المرور الآن 🔒</button>
-        </form>
-      `);
-
-      // منع إغلاق النافذة
-      $('#modalClose').style.display = 'none';
-      $('#modal').onclick = null;
-
-      $('#forceChangePassForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const newPass = $('#forceNewPass').value;
-        const confirmPass = $('#forceConfirmPass').value;
-
-        if(newPass !== confirmPass){
-          toast('❌ كلمتا المرور غير متطابقتين', 'error');
-          return;
-        }
-
-        if(newPass === '123456'){
-          toast('❌ لا يمكن استخدام كلمة المرور الافتراضية', 'error');
-          return;
-        }
-
-        const { error } = await sb.auth.updateUser({ password: newPass });
-        if(error){
-          toast('❌ ' + error.message, 'error');
-          return;
-        }
-
-        // تحديث حالة الحساب
-        await sb.from('profiles').update({ must_change_password: false }).eq('id', currentProfile.id);
-        currentProfile.must_change_password = false;
-
-        // إعادة تفعيل إغلاق النافذة
-        $('#modalClose').style.display = 'flex';
-        $('#modal').addEventListener('click', ev => { if(ev.target.id === 'modal') closeModal(); });
-
-        toast('✅ تم تغيير كلمة المرور بنجاح', 'success');
-        closeModal();
-      });
-    }
-    
-    // ================= ADMIN =================
     async function renderAdmin(){
       if(currentProfile.role!=='admin'){ $('#contentArea').innerHTML='<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
       const area=$('#contentArea');
-      const [u,l,m]=await Promise.all([sb.from('profiles').select('*').order('created_at',{ascending:false}),sb.from('lessons').select('id'),sb.from('materials').select('id')]);
+      const [u]=await Promise.all([sb.from('profiles').select('*').order('created_at',{ascending:false})]);
       const users=u.data||[];
       area.innerHTML=`<div class="stats-grid">
         <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${users.filter(x=>x.role==='student').length}</div><div class="stat-label">الطلاب</div></div>
         <div class="stat-card"><div class="stat-icon">👨‍🏫</div><div class="stat-value">${users.filter(x=>x.role==='teacher').length}</div><div class="stat-label">المدرسون</div></div></div>
       <div class="card"><div class="card-header"><h3 class="card-title">⚙️ إدارة الحسابات</h3><button class="btn btn-primary-solid" onclick="openCreateAccountModal()">➕ إنشاء حساب</button></div>
-      <div class="table-wrapper"><table><thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>النقاط</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>
+      <div class="table-wrapper"><table><thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>النقاط</th><th>إجراءات</th></tr></thead><tbody>
         ${users.map(x=>`<tr><td>${escapeHtml(x.full_name)}</td><td style="font-size:12px">${escapeHtml(x.email)}</td>
           <td><span class="badge ${x.role==='admin'?'badge-danger':x.role==='teacher'?'badge-warning':'badge-primary'}">${x.role}</span></td>
           <td>${x.points||0}</td>
-          <td><span class="badge ${x.active===false?'badge-danger':'badge-success'}">${x.active===false?'موقوف':'نشط'}</span></td>
           <td><div class="btn-group">
             <button class="btn btn-sm btn-outline" onclick="editUserRole('${x.id}','${x.role}')">الدور</button>
-            <button class="btn btn-sm btn-warning" onclick="editUserPoints('${x.id}',${x.points||0})">النقاط</button>
-            ${x.id!==currentProfile.id?`<button class="btn btn-sm ${x.active===false?'btn-success':'btn-danger'}" onclick="toggleUserActive('${x.id}',${x.active===false})">${x.active===false?'تفعيل':'إيقاف'}</button>`:''}
+            <button class="btn btn-sm btn-success" onclick="openStudentBadgesModal('${x.id}','${escapeHtml(x.full_name)}')">🎖️ الأوسمة</button>
+            ${x.id!==currentProfile.id?`<button class="btn btn-sm btn-danger" onclick="deleteUser('${x.id}','${escapeHtml(x.full_name)}')">🗑️ حذف</button>`:''}
           </div></td></tr>`).join('')}
       </tbody></table></div></div>`;
     }
+
     window.openCreateAccountModal=function(){
       openModal(`<h2>➕ إنشاء حساب</h2><form id="accForm">
         <div class="input-group"><label>الاسم</label><input type="text" id="accName" required/></div>
         <div class="input-group"><label>البريد</label><input type="email" id="accEmail" required/></div>
-        <div class="input-group"><label>كلمة المرور</label><input type="text" id="accPass" minlength="6" required/></div>
+        <div class="input-group"><label>كلمة المرور</label><input type="text" id="accPass" value="123456" minlength="6" required/></div>
         <div class="input-group"><label>النوع</label><select id="accRole"><option value="student">طالب</option><option value="teacher">مدرس</option><option value="admin">مدير</option></select></div>
         <button type="submit" class="btn-primary" id="accBtn">إنشاء</button></form>`);
       $('#accForm').addEventListener('submit', async e=>{
@@ -1380,30 +1063,96 @@
           const temp = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth:{ persistSession:false, autoRefreshToken:false, detectSessionInUrl:false } });
           const password = $('#accPass').value;
           const mustChange = (password === '123456');
-          const { data, error } = await temp.auth.signUp({ email:$('#accEmail').value.trim().toLowerCase(), password:password, options:{ data:{ full_name:$('#accName').value.trim(), role:$('#accRole').value } } });          if(error){ toast(/exists/i.test(error.message)?'❌ البريد مسجل':'❌ '+error.message,'error'); return; }
+          const { data, error } = await temp.auth.signUp({ email:$('#accEmail').value.trim().toLowerCase(), password:password, options:{ data:{ full_name:$('#accName').value.trim(), role:$('#accRole').value } } });
+          if(error){ toast(/exists/i.test(error.message)?'❌ البريد مسجل':'❌ '+error.message,'error'); return; }
           if(data.user){
-            await sb.from('profiles').update({ 
-              full_name:$('#accName').value.trim(), 
-              role:$('#accRole').value,
-              must_change_password: mustChange
-            }).eq('id', data.user.id);
-            toast(mustChange ? '✅ تم الإنشاء (سيُطلب من المستخدم تغيير كلمة المرور)' : '✅ تم الإنشاء','success');
+            await sb.from('profiles').update({ full_name:$('#accName').value.trim(), role:$('#accRole').value, must_change_password: mustChange }).eq('id', data.user.id);
+            toast(mustChange ? '✅ تم (سيُطلب تغيير الباسورد)' : '✅ تم','success');
           }
           closeModal(); renderAdmin();
         }catch(ex){ toast('❌ '+ex.message,'error'); }
         finally{ btn.disabled=false; btn.innerHTML='إنشاء'; }
       });
     };
-    window.editUserRole=async function(id,cur){ const r=prompt('الدور (student/teacher/admin):',cur); if(!r||!['student','teacher','admin'].includes(r))return; await sb.from('profiles').update({role:r}).eq('id',id); toast('✅','success'); renderAdmin(); };
-    window.editUserPoints=async function(id,cur){ const p=parseInt(prompt('النقاط:',cur)); if(isNaN(p))return; await sb.from('profiles').update({points:p}).eq('id',id); toast('✅','success'); renderAdmin(); };
-    window.toggleUserActive=async function(id,activate){ if(!activate && !confirm('إيقاف؟'))return; await sb.from('profiles').update({active:activate}).eq('id',id); toast('✅','success'); renderAdmin(); };
 
-    async function addPoints(uid,amount){
-      const {data:p}=await sb.from('profiles').select('points').eq('id',uid).single();
-      const np=(p?.points||0)+amount;
-      await sb.from('profiles').update({points:np}).eq('id',uid);
-      if(uid===currentProfile.id){ currentProfile.points=np; $('#userPoints').textContent=np; }
-    }
+    window.editUserRole=async function(id,cur){ const r=prompt('الدور (student/teacher/admin):',cur); if(!r||!['student','teacher','admin'].includes(r))return; await sb.from('profiles').update({role:r}).eq('id',id); toast('✅','success'); renderAdmin(); };
+
+    window.openStudentBadgesModal = async function(userId, userName){
+      const [badgesRes, userBadgesRes] = await Promise.all([
+        sb.from('badges').select('*').order('name'),
+        sb.from('user_badges').select('*').eq('user_id', userId)
+      ]);
+      const badges = badgesRes.data || [];
+      const userBadges = userBadgesRes.data || [];
+      const userBadgesMap = {};
+      userBadges.forEach(ub => userBadgesMap[ub.badge_id] = ub);
+
+      openModal(`
+        <h2>🎖️ أوسمة ${escapeHtml(userName)}</h2>
+        <div style="max-height:400px;overflow-y:auto">
+          ${badges.length === 0 ? '<div class="empty-state"><p>لا توجد أوسمة متاحة</p></div>' : badges.map(b => {
+            const userBadge = userBadgesMap[b.id];
+            const hasBadge = !!userBadge;
+            const qty = userBadge?.quantity || 0;
+            return `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="font-size:28px">${escapeHtml(b.icon || '🏅')}</span>
+                  <div>
+                    <div style="font-weight:700">${escapeHtml(b.name)}</div>
+                    <div style="font-size:11px;color:var(--muted)">⭐ ${b.points || 0} نقطة</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  ${hasBadge ? `<span class="badge badge-success">✓ ${qty}</span>` : ''}
+                  ${hasBadge ? `<button class="btn btn-danger btn-sm" onclick="removeBadgeFromStudent('${userId}', ${b.id})">🗑️</button>` : `<button class="btn btn-success btn-sm" onclick="addBadgeToStudent('${userId}', ${b.id})">➕</button>`}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `);
+    };
+
+    window.addBadgeToStudent = async function(userId, badgeId){
+      const { data: existing } = await sb.from('user_badges').select('*').eq('user_id', userId).eq('badge_id', badgeId).maybeSingle();
+      if(existing){
+        await sb.from('user_badges').update({ quantity: (existing.quantity || 0) + 1 }).eq('id', existing.id);
+      } else {
+        await sb.from('user_badges').insert({ user_id: userId, badge_id: badgeId, quantity: 1 });
+      }
+      await recalculatePoints(userId);
+      toast('✅ تم المنح', 'success');
+      openStudentBadgesModal(userId, '');
+    };
+
+    window.removeBadgeFromStudent = async function(userId, badgeId){
+      if(!confirm('حذف الوسام من الطالب؟')) return;
+      const { data: existing } = await sb.from('user_badges').select('*').eq('user_id', userId).eq('badge_id', badgeId).maybeSingle();
+      if(existing){
+        if(existing.quantity > 1){
+          await sb.from('user_badges').update({ quantity: existing.quantity - 1 }).eq('id', existing.id);
+        } else {
+          await sb.from('user_badges').delete().eq('id', existing.id);
+        }
+      }
+      await recalculatePoints(userId);
+      toast('🗑️ تم الحذف', 'success');
+      openStudentBadgesModal(userId, '');
+    };
+
+    window.deleteUser = async function(userId, userName){
+      if(!confirm(`حذف حساب ${userName} نهائياً؟`)) return;
+      if(!confirm(`تأكيد نهائي: سيتم حذف ${userName} وجميع بياناته!`)) return;
+      
+      try {
+        await sb.from('profiles').delete().eq('id', userId);
+        toast('🗑️ تم حذف الحساب', 'success');
+        renderAdmin();
+      } catch(err) {
+        toast('❌ ' + err.message, 'error');
+      }
+    };
 
     (async ()=>{
       try{ const { data:{ session } } = await sb.auth.getSession(); if(session) await loadUser(); }catch(e){ console.error(e); }
