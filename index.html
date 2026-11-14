@@ -450,9 +450,7 @@
       return totalPoints;
     }
 
-    // ========== AUTO BADGES ==========
     async function checkAndAwardAutoBadges(userId, type, data={}){
-      // Get auto badge IDs
       const { data: autoBadges } = await sb.from('badges').select('*').in('name', ['مستكشف','متفوق','ممتحن','مجتهد']);
       const badgeMap = {};
       (autoBadges || []).forEach(b => badgeMap[b.name] = b.id);
@@ -550,7 +548,6 @@
       }
     }
 
-    // ========== ANNOUNCEMENTS ==========
     async function renderAnnouncements(){
       const area = $('#contentArea');
       if(!isAdmin()){ area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
@@ -562,10 +559,16 @@
         <div class="announcement-header"><div class="announcement-title">${a.type === 'urgent' ? '🚨' : a.type === 'opportunity' ? '🌟' : '📢'} ${escapeHtml(a.title)}</div>
         <div class="announcement-date">${formatDate(a.created_at)}</div></div>
         <div class="announcement-content">${escapeHtml(a.content || '')}</div>
-        <div style="margin-top:12px"><button class="btn btn-danger btn-sm" onclick="deleteAnnouncement(${a.id})">🗑️ حذف</button></div></div>`).join('') : `<div class="empty-state"><div class="icon">📢</div><p>لا توجد إعلانات</p></div>`;
-      area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📢 إدارة الإعلانات</h3><button class="btn btn-primary-solid" onclick="openAnnouncementModal()">➕ إضافة</button></div>${body}</div>`;
+        <div style="margin-top:12px"><button class="btn btn-danger btn-sm delete-announcement-btn" data-id="${a.id}">🗑️ حذف</button></div></div>`).join('') : `<div class="empty-state"><div class="icon">📢</div><p>لا توجد إعلانات</p></div>`;
+      area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📢 إدارة الإعلانات</h3><button class="btn btn-primary-solid" id="addAnnouncementBtn">➕ إضافة</button></div>${body}</div>`;
+      
+      $('#addAnnouncementBtn').addEventListener('click', openAnnouncementModal);
+      $$('.delete-announcement-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteAnnouncement(parseInt(btn.dataset.id)));
+      });
     }
-    window.openAnnouncementModal = function(){
+    
+    function openAnnouncementModal(){
       openModal(`<h2>📢 إضافة إعلان</h2><form id="announcementForm">
         <div class="input-group"><label>العنوان</label><input type="text" id="annTitle" required></div>
         <div class="input-group"><label>المحتوى</label><textarea id="annContent" rows="5" required></textarea></div>
@@ -577,18 +580,22 @@
         if(error){ toast('❌ ' + error.message, 'error'); return; }
         toast('✅ تم النشر', 'success'); closeModal(); renderAnnouncements();
       });
-    };
-    window.deleteAnnouncement = async function(id){ if(!confirm('حذف؟')) return; await sb.from('announcements').delete().eq('id', id); toast('🗑️ تم','success'); renderAnnouncements(); };
+    }
+    
+    async function deleteAnnouncement(id){ 
+      if(!confirm('حذف؟')) return; 
+      await sb.from('announcements').delete().eq('id', id); 
+      toast('🗑️ تم','success'); 
+      renderAnnouncements(); 
+    }
 
-    // ========== BADGES SYSTEM (COMPLETE REWRITE) ==========
-
+    // ========== BADGES SYSTEM ==========
     async function renderBadges(){
       const area = $('#contentArea');
       if(!isAdmin()){ area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
       
       area.innerHTML = '<div class="empty-state"><span class="loader"></span></div>';
       
-      // Fetch all badges and calculate stats
       const [badgesRes, studentsRes, allUserBadges] = await Promise.all([
         sb.from('badges').select('*').order('name'),
         sb.from('profiles').select('id').eq('role','student'),
@@ -599,12 +606,10 @@
       const students = studentsRes.data || [];
       const userBadges = allUserBadges.data || [];
       
-      // Calculate stats
       const totalBadges = badges.length;
       const totalAwarded = userBadges.reduce((sum, ub) => sum + (ub.quantity || 0), 0);
       const uniqueBadgesAwarded = new Set(userBadges.map(ub => ub.badge_id)).size;
       
-      // Build badges grid
       const badgesHTML = badges.length ? `
         <div class="badges-grid">
           ${badges.map(b => `
@@ -614,8 +619,8 @@
               <div class="badge-points">⭐ ${b.points || 0} نقطة</div>
               ${b.description ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4">${escapeHtml(b.description)}</div>` : ''}
               <div class="btn-group" style="margin-top:12px;justify-content:center">
-                <button class="btn btn-success btn-sm" onclick="showAwardModal(${b.id}, '${escapeHtml(b.name)}', ${b.points || 0})">🎁 منح</button>
-                <button class="btn btn-danger btn-sm" onclick="confirmDeleteBadge(${b.id}, '${escapeHtml(b.name)}')">🗑️</button>
+                <button class="btn btn-success btn-sm award-badge-btn" data-id="${b.id}" data-name="${escapeHtml(b.name)}" data-points="${b.points || 0}">🎁 منح</button>
+                <button class="btn btn-danger btn-sm delete-badge-btn" data-id="${b.id}" data-name="${escapeHtml(b.name)}">🗑️</button>
               </div>
             </div>
           `).join('')}
@@ -644,18 +649,25 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">🎖️ إدارة الأوسمة</h3>
-            <button class="btn btn-primary-solid" onclick="showCreateBadgeModal()">➕ إضافة وسام جديد</button>
+            <button class="btn btn-primary-solid" id="createBadgeBtn">➕ إضافة وسام جديد</button>
           </div>
           ${badgesHTML}
         </div>
       `;
+      
+      $('#createBadgeBtn').addEventListener('click', showCreateBadgeModal);
+      $$('.award-badge-btn').forEach(btn => {
+        btn.addEventListener('click', () => showAwardModal(parseInt(btn.dataset.id), btn.dataset.name, parseInt(btn.dataset.points)));
+      });
+      $$('.delete-badge-btn').forEach(btn => {
+        btn.addEventListener('click', () => confirmDeleteBadge(parseInt(btn.dataset.id), btn.dataset.name));
+      });
     }
 
-    // ========== CREATE BADGE ==========
-    window.showCreateBadgeModal = function(){
+    function showCreateBadgeModal(){
       openModal(`
         <h2>🎖️ إضافة وسام جديد</h2>
-        <form id="createBadgeForm" onsubmit="handleCreateBadge(event)">
+        <form id="createBadgeForm">
           <div class="input-group">
             <label>اسم الوسام</label>
             <input type="text" id="newBadgeName" required placeholder="مثال: بطل القراءة"/>
@@ -676,30 +688,29 @@
           <button type="submit" class="btn-primary">💾 حفظ الوسام</button>
         </form>
       `);
-    };
+      
+      $('#createBadgeForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        
+        const name = $('#newBadgeName').value.trim();
+        const icon = $('#newBadgeIcon').value.trim() || '🏅';
+        const points = parseInt($('#newBadgePoints').value) || 0;
+        const description = $('#newBadgeDesc').value.trim();
+        
+        const { error } = await sb.from('badges').insert({ name, icon, points, description });
+        
+        if(error){
+          toast('❌ ' + error.message, 'error');
+          return;
+        }
+        
+        toast('✅ تم إنشاء الوسام بنجاح', 'success');
+        closeModal();
+        renderBadges();
+      });
+    }
 
-    window.handleCreateBadge = async function(e){
-      e.preventDefault();
-      
-      const name = $('#newBadgeName').value.trim();
-      const icon = $('#newBadgeIcon').value.trim() || '🏅';
-      const points = parseInt($('#newBadgePoints').value) || 0;
-      const description = $('#newBadgeDesc').value.trim();
-      
-      const { error } = await sb.from('badges').insert({ name, icon, points, description });
-      
-      if(error){
-        toast('❌ ' + error.message, 'error');
-        return;
-      }
-      
-      toast('✅ تم إنشاء الوسام بنجاح', 'success');
-      closeModal();
-      renderBadges();
-    };
-
-    // ========== DELETE BADGE ==========
-    window.confirmDeleteBadge = async function(badgeId, badgeName){
+    function confirmDeleteBadge(badgeId, badgeName){
       openModal(`
         <h2>🗑️ حذف الوسام</h2>
         <div style="text-align:center;padding:20px">
@@ -710,28 +721,29 @@
             ⚠️ سيتم حذف هذا الوسام من جميع الطلاب الذين حصلوا عليه!
           </p>
           <div style="display:flex;gap:12px;justify-content:center">
-            <button class="btn btn-danger" onclick="executeDeleteBadge(${badgeId})">🗑️ نعم، احذف</button>
-            <button class="btn btn-outline" onclick="closeModal()">❌ إلغاء</button>
+            <button class="btn btn-danger" id="confirmDeleteBtn">🗑️ نعم، احذف</button>
+            <button class="btn btn-outline" id="cancelDeleteBtn">❌ إلغاء</button>
           </div>
         </div>
       `);
-    };
-
-    window.executeDeleteBadge = async function(badgeId){
-      const { error } = await sb.from('badges').delete().eq('id', badgeId);
       
-      if(error){
-        toast('❌ ' + error.message, 'error');
-        return;
-      }
+      $('#confirmDeleteBtn').addEventListener('click', async () => {
+        const { error } = await sb.from('badges').delete().eq('id', badgeId);
+        
+        if(error){
+          toast('❌ ' + error.message, 'error');
+          return;
+        }
+        
+        toast('🗑️ تم حذف الوسام', 'success');
+        closeModal();
+        renderBadges();
+      });
       
-      toast('🗑️ تم حذف الوسام', 'success');
-      closeModal();
-      renderBadges();
-    };
+      $('#cancelDeleteBtn').addEventListener('click', closeModal);
+    }
 
-    // ========== AWARD BADGE ==========
-    window.showAwardModal = async function(badgeId, badgeName, badgePoints){
+    async function showAwardModal(badgeId, badgeName, badgePoints){
       const { data: students } = await sb.from('profiles').select('*').eq('role','student').order('full_name');
       
       if(!students || !students.length){
@@ -739,7 +751,6 @@
         return;
       }
       
-      // Store in global
       window.awardBadgeId = badgeId;
       window.awardBadgePoints = badgePoints;
       
@@ -751,7 +762,7 @@
           <div style="color:var(--accent);font-size:16px;font-weight:700">⭐ ${badgePoints} نقطة لكل وسام</div>
         </div>
         
-        <form id="awardForm" onsubmit="handleAwardBadge(event)">
+        <form id="awardForm">
           <div class="input-group">
             <label>اختر الطالب</label>
             <select id="awardStudentId" required>
@@ -763,8 +774,7 @@
           <div class="input-group">
             <label>عدد الأوسمة</label>
             <input type="number" id="awardQuantity" value="1" min="1" max="100" required 
-                  style="font-size:24px;text-align:center;font-weight:900"
-                  oninput="updateAwardPoints()"/>
+                   style="font-size:24px;text-align:center;font-weight:900"/>
           </div>
           
           <div style="background:rgba(34,211,238,.1);border:2px solid rgba(34,211,238,.3);padding:16px;border-radius:12px;margin-bottom:20px;text-align:center">
@@ -776,168 +786,56 @@
           <button type="submit" class="btn-primary" style="font-size:16px">🎁 منح الوسام الآن</button>
         </form>
       `);
-    };
-
-    window.updateAwardPoints = function(){
-      const qty = parseInt($('#awardQuantity').value) || 1;
-      const total = (window.awardBadgePoints || 0) * qty;
-      $('#awardTotalPoints').textContent = total;
-    };
-
-    window.handleAwardBadge = async function(e){
-      e.preventDefault();
       
-      const badgeId = window.awardBadgeId;
-      const studentId = $('#awardStudentId').value;
-      const quantity = parseInt($('#awardQuantity').value) || 1;
+      $('#awardQuantity').addEventListener('input', () => {
+        const qty = parseInt($('#awardQuantity').value) || 1;
+        const total = (window.awardBadgePoints || 0) * qty;
+        $('#awardTotalPoints').textContent = total;
+      });
       
-      if(!studentId){
-        toast('⚠️ اختر طالب', 'warning');
-        return;
-      }
-      
-      // Check if student already has this badge
-      const { data: existing } = await sb.from('user_badges')
-        .select('*')
-        .eq('user_id', studentId)
-        .eq('badge_id', badgeId)
-        .maybeSingle();
-      
-      if(existing){
-        // Update quantity
-        const { error } = await sb.from('user_badges')
-          .update({ quantity: (existing.quantity || 0) + quantity })
-          .eq('id', existing.id);
+      $('#awardForm').addEventListener('submit', async e => {
+        e.preventDefault();
         
-        if(error){
-          toast('❌ ' + error.message, 'error');
+        const badgeId = window.awardBadgeId;
+        const studentId = $('#awardStudentId').value;
+        const quantity = parseInt($('#awardQuantity').value) || 1;
+        
+        if(!studentId){
+          toast('⚠️ اختر طالب', 'warning');
           return;
         }
-      } else {
-        // Insert new
-        const { error } = await sb.from('user_badges')
-          .insert({ user_id: studentId, badge_id: badgeId, quantity: quantity });
         
-        if(error){
-          toast('❌ ' + error.message, 'error');
-          return;
-        }
-      }
-      
-      // Recalculate points
-      await recalculatePoints(studentId);
-      
-      toast(`✅ تم منح ${quantity} وسام بنجاح!`, 'success');
-      closeModal();
-    };
-
-    // ========== MANAGE STUDENT BADGES (FROM ADMIN PANEL) ==========
-    window.openStudentBadgesModal = async function(userId, userName){
-      const [badgesRes, userBadgesRes] = await Promise.all([
-        sb.from('badges').select('*').order('name'),
-        sb.from('user_badges').select('*').eq('user_id', userId)
-      ]);
-      
-      const badges = badgesRes.data || [];
-      const userBadges = userBadgesRes.data || [];
-      
-      // Create map for quick lookup
-      const userBadgesMap = {};
-      userBadges.forEach(ub => userBadgesMap[ub.badge_id] = ub);
-      
-      // Calculate total points
-      const totalPoints = userBadges.reduce((sum, ub) => {
-        const badge = badges.find(b => b.id === ub.badge_id);
-        return sum + ((badge?.points || 0) * (ub.quantity || 1));
-      }, 0);
-      
-      openModal(`
-        <h2>🎖️ أوسمة ${escapeHtml(userName)}</h2>
-        <div style="background:linear-gradient(135deg, rgba(139,92,246,.15), rgba(34,211,238,.08));padding:16px;border-radius:12px;margin-bottom:20px;text-align:center;border:1px solid rgba(139,92,246,.3)">
-          <div style="font-size:14px;color:var(--muted);margin-bottom:6px">إجمالي النقاط من الأوسمة</div>
-          <div style="font-size:28px;font-weight:900;color:var(--accent)">⭐ ${totalPoints}</div>
-        </div>
+        const { data: existing } = await sb.from('user_badges')
+          .select('*')
+          .eq('user_id', studentId)
+          .eq('badge_id', badgeId)
+          .maybeSingle();
         
-        <div style="max-height:400px;overflow-y:auto">
-          ${badges.length === 0 ? '<div class="empty-state"><p>لا توجد أوسمة متاحة</p></div>' : badges.map(b => {
-            const userBadge = userBadgesMap[b.id];
-            const hasBadge = !!userBadge;
-            const qty = userBadge?.quantity || 0;
-            
-            return `
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--border);transition:.2s" 
-                  onmouseover="this.style.background='rgba(255,255,255,.02)'" 
-                  onmouseout="this.style.background='transparent'">
-                <div style="display:flex;align-items:center;gap:14px;flex:1">
-                  <div style="font-size:36px">${escapeHtml(b.icon || '🏅')}</div>
-                  <div style="flex:1">
-                    <div style="font-weight:800;font-size:15px">${escapeHtml(b.name)}</div>
-                    <div style="font-size:12px;color:var(--muted);margin-top:2px">⭐ ${b.points || 0} نقطة</div>
-                  </div>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px">
-                  ${hasBadge ? `<span class="badge badge-success" style="font-size:13px;padding:6px 12px">✓ ${qty}</span>` : ''}
-                  ${hasBadge 
-                    ? `<button class="btn btn-danger btn-sm" onclick="removeBadgeFromStudent('${userId}', ${b.id}, '${escapeHtml(userName)}')">🗑️</button>` 
-                    : `<button class="btn btn-success btn-sm" onclick="addBadgeToStudent('${userId}', ${b.id}, '${escapeHtml(userName)}')">➕</button>`}
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `);
-    };
-
-    window.addBadgeToStudent = async function(userId, badgeId, userName){
-      const { data: existing } = await sb.from('user_badges')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('badge_id', badgeId)
-        .maybeSingle();
-      
-      if(existing){
-        await sb.from('user_badges')
-          .update({ quantity: (existing.quantity || 0) + 1 })
-          .eq('id', existing.id);
-      } else {
-        await sb.from('user_badges')
-          .insert({ user_id: userId, badge_id: badgeId, quantity: 1 });
-      }
-      
-      await recalculatePoints(userId);
-      toast('✅ تم منح الوسام', 'success');
-      
-      // Refresh modal
-      openStudentBadgesModal(userId, userName);
-    };
-
-    window.removeBadgeFromStudent = async function(userId, badgeId, userName){
-      if(!confirm('حذف الوسام من الطالب؟')) return;
-      
-      const { data: existing } = await sb.from('user_badges')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('badge_id', badgeId)
-        .maybeSingle();
-      
-      if(existing){
-        if(existing.quantity > 1){
-          await sb.from('user_badges')
-            .update({ quantity: existing.quantity - 1 })
+        if(existing){
+          const { error } = await sb.from('user_badges')
+            .update({ quantity: (existing.quantity || 0) + quantity })
             .eq('id', existing.id);
+          
+          if(error){
+            toast('❌ ' + error.message, 'error');
+            return;
+          }
         } else {
-          await sb.from('user_badges')
-            .delete()
-            .eq('id', existing.id);
+          const { error } = await sb.from('user_badges')
+            .insert({ user_id: studentId, badge_id: badgeId, quantity: quantity });
+          
+          if(error){
+            toast('❌ ' + error.message, 'error');
+            return;
+          }
         }
-      }
-      
-      await recalculatePoints(userId);
-      toast('🗑️ تم حذف الوسام', 'success');
-      
-      // Refresh modal
-      openStudentBadgesModal(userId, userName);
-    };
+        
+        await recalculatePoints(studentId);
+        
+        toast(`✅ تم منح ${quantity} وسام بنجاح!`, 'success');
+        closeModal();
+      });
+    }
     // ========== LESSONS ==========
     async function renderLessons(){
       const area=$('#contentArea');
