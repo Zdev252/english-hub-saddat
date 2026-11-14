@@ -730,11 +730,57 @@ async function renderMaterials(){
 }
 
 async function trackMaterialView(materialId){
-  if(currentProfile.role === 'student'){
-    try {
-      await sb.from('material_views').upsert({ user_id: currentProfile.id, material_id: materialId }, { onConflict: 'user_id,material_id' });
-      await checkAndAwardAutoBadges(currentProfile.id, 'material_view');
-    } catch(e) { console.error(e); }
+  if(currentProfile.role !== 'student') return;
+  
+  try {
+    // تحقق لو الطالب فتح الملف ده قبل كده
+    const { data: existing, error: checkError } = await sb.from('material_views')
+      .select('id')
+      .eq('user_id', currentProfile.id)
+      .eq('material_id', materialId)
+      .maybeSingle();
+    
+    if(checkError) {
+      console.error('Check error:', checkError);
+      return;
+    }
+    
+    if(!existing){
+      // أول مرة يفتح الملف ده → امنحه الوسام
+      await sb.from('material_views').insert({ 
+        user_id: currentProfile.id, 
+        material_id: materialId 
+      });
+      
+      // امنح وسام "مستكشف" مرة واحدة
+      const { data: badge } = await sb.from('badges')
+        .select('id')
+        .eq('name', 'مستكشف')
+        .maybeSingle();
+      
+      if(badge){
+        const { data: userBadge } = await sb.from('user_badges')
+          .select('*')
+          .eq('user_id', currentProfile.id)
+          .eq('badge_id', badge.id)
+          .maybeSingle();
+        
+        if(userBadge){
+          await sb.from('user_badges')
+            .update({ quantity: (userBadge.quantity || 0) + 1 })
+            .eq('id', userBadge.id);
+        } else {
+          await sb.from('user_badges')
+            .insert({ user_id: currentProfile.id, badge_id: badge.id, quantity: 1 });
+        }
+        
+        await recalculatePoints(currentProfile.id);
+        toast('🎉 حصلت على وسام "مستكشف 🔍"!', 'success');
+      }
+    }
+    // لو فتح الملف قبل كده → ما يعملش حاجة (منع الغش)
+  } catch(e) { 
+    console.error('Track error:', e); 
   }
 }
 
@@ -988,18 +1034,39 @@ async function renderProjects(){
   $$('.delete-project-btn').forEach(b => b.addEventListener('click', () => deleteProject(parseInt(b.dataset.id))));
 }
 
-function openProjectModal(){
+window.openProjectModal = function(){
   openModal(`<h2>🎯 بروجيكت جديد</h2><form id="projForm">
     <div class="input-group"><label>العنوان</label><input type="text" id="projTitle" required/></div>
     <div class="input-group"><label>الوصف</label><textarea id="projDesc" rows="4"></textarea></div>
     <div class="input-group"><label>الموعد النهائي (اختياري)</label><input type="datetime-local" id="projDeadline"/></div>
-    <button type="submit" class="btn-primary">إنشاء</button></form>`);
-  $('#projForm').addEventListener('submit', async e=>{
+    <button type="submit" class="btn-primary" id="projSaveBtn">إنشاء</button></form>`);
+  
+  $('#projForm').addEventListener('submit', async e => {
     e.preventDefault();
-    await sb.from('projects').insert({title:$('#projTitle').value.trim(),description:$('#projDesc').value.trim(),deadline:$('#projDeadline').value?new Date($('#projDeadline').value).toISOString():null,created_by:currentProfile.id});
-    toast('✅','success'); closeModal(); renderProjects();
+    const btn = $('#projSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> جاري الإنشاء...';
+    
+    try {
+      const { error } = await sb.from('projects').insert({
+        title: $('#projTitle').value.trim(),
+        description: $('#projDesc').value.trim(),
+        deadline: $('#projDeadline').value ? new Date($('#projDeadline').value).toISOString() : null,
+        created_by: currentProfile.id
+      });
+      
+      if(error) throw error;
+      
+      toast('✅ تم إنشاء البروجيكت','success');
+      closeModal();
+      renderProjects();
+    } catch(err) {
+      toast('❌ ' + err.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'إنشاء';
+    }
   });
-}
+};
 
 function submitProject(id){
   (async () => {
