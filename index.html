@@ -65,7 +65,7 @@ html,body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);
 .page-title{font-size:19px;font-weight:900;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .points-badge{background:var(--grad);color:#fff;padding:8px 16px;border-radius:20px;font-weight:900;display:flex;align-items:center;gap:6px;font-size:14px}
 .content-area{padding:24px;flex:1}
-.stats-grid,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-bottom:24px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-bottom:24px}
 .stat-card,.card,.item-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;transition:.3s}
 .stat-card:hover,.item-card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.5)}
 .stat-icon{width:48px;height:48px;background:var(--grad);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:23px;margin-bottom:12px}
@@ -145,8 +145,8 @@ th{background:rgba(255,255,255,.04);font-weight:800;color:#aab2c8;font-size:12px
 .ticket-body{color:#b8c0d4;line-height:1.8;font-size:13.5px;padding:12px;background:rgba(255,255,255,.02);border-radius:8px;margin:10px 0}
 .ticket-reply{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);padding:12px;border-radius:8px;margin-top:10px}
 .ticket-reply strong{color:var(--success)}
-@media (max-width:900px){.sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}.main-content{margin-right:0}.menu-toggle{display:block}.content-area{padding:16px}.stats-grid,.grid,.badges-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}table{min-width:600px}}
-@media (max-width:600px){.login-container{padding:30px 20px}.stats-grid,.grid,.badges-grid{grid-template-columns:1fr}.btn-group{flex-direction:column}.btn-group .btn{width:100%}.modal-content{width:95%;max-height:95vh}.modal-body{padding:20px 16px}.topbar{padding:12px 16px}.page-title{font-size:16px}.points-badge{padding:6px 12px;font-size:13px}.table-wrapper{margin:-10px;border-radius:0}table{min-width:100%;font-size:11px}th,td{padding:8px 6px}td .btn-group{flex-direction:column;gap:4px}td .btn{padding:4px 8px;font-size:10px;min-height:28px;width:100%}.input-group input,.input-group select,.input-group textarea{font-size:14px;padding:10px 12px;min-height:44px}}
+@media (max-width:900px){.sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}.main-content{margin-right:0}.menu-toggle{display:block}.content-area{padding:16px}.stats-grid,.badges-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}table{min-width:600px}}
+@media (max-width:600px){.login-container{padding:30px 20px}.stats-grid,.badges-grid{grid-template-columns:1fr}.btn-group{flex-direction:column}.btn-group .btn{width:100%}.modal-content{width:95%;max-height:95vh}.modal-body{padding:20px 16px}.topbar{padding:12px 16px}.page-title{font-size:16px}.points-badge{padding:6px 12px;font-size:13px}.table-wrapper{margin:-10px;border-radius:0}table{min-width:100%;font-size:11px}th,td{padding:8px 6px}td .btn-group{flex-direction:column;gap:4px}td .btn{padding:4px 8px;font-size:10px;min-height:28px;width:100%}.input-group input,.input-group select,.input-group textarea{font-size:14px;padding:10px 12px;min-height:44px}}
 </style>
 </head>
 <body>
@@ -375,27 +375,14 @@ async function checkAndAwardAutoBadges(userId, type){
   const icons = {material_view:'🔍',assignment_pass:'🌟',exam_complete:'📝',project_submit:'💪'};
   const badgeName = names[type];
   if(!badgeName || !badgeMap[badgeName]) return;
-  
-  // كل مرة بيزيد quantity بـ 1
-  const { data: existing } = await sb.from('user_badges')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('badge_id', badgeMap[badgeName])
-    .maybeSingle();
-  
+  const { data: existing } = await sb.from('user_badges').select('*').eq('user_id', userId).eq('badge_id', badgeMap[badgeName]).maybeSingle();
   if(existing){
-    await sb.from('user_badges')
-      .update({ quantity: (existing.quantity || 0) + 1 })
-      .eq('id', existing.id);
+    await sb.from('user_badges').update({ quantity: (existing.quantity || 0) + 1 }).eq('id', existing.id);
   } else {
-    await sb.from('user_badges')
-      .insert({ user_id: userId, badge_id: badgeMap[badgeName], quantity: 1 });
+    await sb.from('user_badges').insert({ user_id: userId, badge_id: badgeMap[badgeName], quantity: 1 });
   }
-  
   await recalculatePoints(userId);
-  if(userId === currentProfile.id){
-    toast(`🎉 حصلت على وسام "${badgeName} ${icons[type]}"!`, 'success');
-  }
+  if(userId === currentProfile.id) toast(`🎉 حصلت على وسام "${badgeName} ${icons[type]}"!`, 'success');
 }
 
 async function renderDashboard(){
@@ -451,7 +438,6 @@ async function renderDashboard(){
   }
 }
 
-// ========== ANNOUNCEMENTS ==========
 async function renderAnnouncements(){
   const area = $('#contentArea');
   if(!isAdmin()){ area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
@@ -491,7 +477,6 @@ async function deleteAnnouncement(id){
   renderAnnouncements();
 }
 
-// ========== BADGES ==========
 async function renderBadges(){
   const area = $('#contentArea');
   if(!isAdmin()){ area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
@@ -637,7 +622,6 @@ async function showAwardModal(badgeId, badgeName, badgePoints){
   });
 }
 
-// ========== LESSONS ==========
 async function renderLessons(){
   const area=$('#contentArea');
   area.innerHTML='<div class="empty-state"><span class="loader"></span></div>';
@@ -699,8 +683,8 @@ function openAttendanceModal(lessonId){
     const {data:students}=await sb.from('profiles').select('*').eq('role','student').order('full_name');
     const {data:att}=await sb.from('attendance').select('*').eq('lesson_id',lessonId);
     const map={}; (att||[]).forEach(a=>map[a.user_id]=a.status);
-    openModal(`<h2>📋 الحضور</h2><div style="max-height:420px;overflow-y:auto">${(students||[]).map(s=>{const st=map[s.id]||'absent';return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border)"><span style="font-weight:700">${escapeHtml(s.full_name)}</span><select class="att-select" data-uid="${s.id}" style="padding:6px 10px;border-radius:8px;background:var(--bg2);color:var(--text);border:1px solid var(--border)"><option value="present" ${st==='present'?'selected':''}>✅</option><option value="absent" ${st==='absent'?'selected':''}>❌</option><option value="late" ${st==='late'?'selected':''}>⏰</option></select></div>`;}).join('')}</div><button class="btn btn-primary" style="margin-top:15px" data-action="save-attendance">💾 حفظ</button>`);
-    $('[data-action="save-attendance"]').addEventListener('click', async () => {
+    openModal(`<h2>📋 الحضور</h2><div style="max-height:420px;overflow-y:auto">${(students||[]).map(s=>{const st=map[s.id]||'absent';return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border)"><span style="font-weight:700">${escapeHtml(s.full_name)}</span><select class="att-select" data-uid="${s.id}" style="padding:6px 10px;border-radius:8px;background:var(--bg2);color:var(--text);border:1px solid var(--border)"><option value="present" ${st==='present'?'selected':''}>✅</option><option value="absent" ${st==='absent'?'selected':''}>❌</option><option value="late" ${st==='late'?'selected':''}>⏰</option></select></div>`;}).join('')}</div><button class="btn btn-primary" style="margin-top:15px" id="saveAttendanceBtn">💾 حفظ</button>`);
+    $('#saveAttendanceBtn').addEventListener('click', async () => {
       for(const sel of $$('.att-select')){
         await sb.from('attendance').upsert({lesson_id:lessonId,user_id:sel.dataset.uid,status:sel.value},{onConflict:'user_id,lesson_id'});
       }
@@ -711,22 +695,19 @@ function openAttendanceModal(lessonId){
 
 async function markAttendance(l,st){ await sb.from('attendance').upsert({lesson_id:l,user_id:currentProfile.id,status:st},{onConflict:'user_id,lesson_id'}); toast('✅','success'); }
 
-// ========== MATERIALS ==========
 async function renderMaterials(){
   const area=$('#contentArea'); const admin=isAdmin();
   
-  // جلب الفولدرات والمواد والواجبات
   const [foldersRes, materialsRes, assignmentsRes] = await Promise.all([
     sb.from('folders').select('*').order('order_index', { ascending: true }),
-    sb.from('materials').select('*, folders(name)').order('created_at', { ascending: false }),
-    sb.from('assignments').select('*, materials(title)').order('created_at', { ascending: false })
+    sb.from('materials').select('*').order('created_at', { ascending: false }),
+    sb.from('assignments').select('*').order('created_at', { ascending: false })
   ]);
   
   const folders = foldersRes.data || [];
   const materials = materialsRes.data || [];
   const assignments = assignmentsRes.data || [];
   
-  // تنظيم المواد حسب الفولدر
   const materialsByFolder = {};
   materials.forEach(m => {
     const folderId = m.folder_id || 'no-folder';
@@ -734,29 +715,26 @@ async function renderMaterials(){
     materialsByFolder[folderId].push(m);
   });
   
-  // تنظيم الواجبات حسب المادة
-  const assignmentsByMaterial = {};
+  const assignmentsByFolder = {};
   assignments.forEach(a => {
-    const materialId = a.material_id || 'no-material';
-    if(!assignmentsByMaterial[materialId]) assignmentsByMaterial[materialId] = [];
-    assignmentsByMaterial[materialId].push(a);
+    const folderId = a.folder_id || 'no-folder';
+    if(!assignmentsByFolder[folderId]) assignmentsByFolder[folderId] = [];
+    assignmentsByFolder[folderId].push(a);
   });
   
-  // أزرار الإدارة
   const addBtn = admin ? `
     <div class="btn-group">
-      <button class="btn btn-primary-solid" id="addFolderBtn">📁 فولدر جديد</button>
-      <button class="btn btn-success" id="addMaterialBtn">+ مادة</button>
+      <button class="btn btn-primary-solid" id="addFolderBtn">📁 فولدر</button>
+      <button class="btn btn-success" id="addMaterialBtn">+ ملف</button>
       <button class="btn btn-warning" id="addAssignmentBtn">+ واجب</button>
     </div>
   ` : '';
   
-  // بناء المحتوى
   let contentHTML = '';
   
-  // الفولدرات
   folders.forEach(folder => {
     const folderMaterials = materialsByFolder[folder.id] || [];
+    const folderAssignments = assignmentsByFolder[folder.id] || [];
     
     contentHTML += `
       <div class="card" style="margin-bottom:20px;border-right:4px solid var(--primary)">
@@ -771,62 +749,66 @@ async function renderMaterials(){
         </div>
         ${folder.description ? `<p style="color:var(--muted);margin-bottom:15px">${escapeHtml(folder.description)}</p>` : ''}
         
-        ${folderMaterials.length > 0 ? `
-          <div style="display:flex;flex-direction:column;gap:15px">
-            ${folderMaterials.map(m => {
-              const materialAssignments = assignmentsByMaterial[m.id] || [];
-              return `
-                <div class="item-card" style="margin-right:20px;border-right:3px solid var(--accent)">
-                  <h3>${escapeHtml(m.title)}</h3>
-                  <p>${escapeHtml(m.description||'')}</p>
-                  <div class="btn-group" style="margin-bottom:10px">
-                    <a href="${escapeHtml(m.url)}" target="_blank" class="btn btn-primary-solid btn-sm" data-action="view-material" data-id="${m.id}">📖 فتح المادة</a>
-                    ${admin ? `
-                      <button class="btn btn-sm btn-outline" data-action="edit-material" data-id="${m.id}">✏️</button>
-                      <button class="btn btn-sm btn-danger" data-action="delete-material" data-id="${m.id}">🗑️</button>
-                    ` : ''}
-                  </div>
-                  
-                  ${materialAssignments.length > 0 ? `
-                    <div style="margin-top:15px;padding-top:15px;border-top:1px solid var(--border)">
-                      <h4 style="font-size:14px;margin-bottom:10px;color:var(--accent)">📝 الواجبات المرتبطة:</h4>
-                      <div style="display:flex;flex-direction:column;gap:10px">
-                        ${materialAssignments.map(a => `
-                          <div style="background:rgba(255,255,255,.02);padding:12px;border-radius:8px;border:1px solid var(--border)">
-                            <div style="font-weight:700;margin-bottom:6px">${escapeHtml(a.title)}</div>
-                            ${a.description ? `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${escapeHtml(a.description)}</div>` : ''}
-                            <div class="btn-group">
-                              <button class="btn btn-primary-solid btn-sm" data-action="start-assignment" data-id="${a.id}">ابدأ الواجب</button>
-                              ${admin ? `<button class="btn btn-sm btn-outline" data-action="edit-assignment" data-id="${a.id}">✏️</button><button class="btn btn-sm btn-danger" data-action="delete-assignment" data-id="${a.id}">🗑️</button>` : ''}
-                            </div>
-                          </div>
-                        `).join('')}
-                      </div>
-                    </div>
-                  ` : ''}
-                </div>
-              `;
-            }).join('')}
-          </div>
-        ` : `<div class="empty-state" style="padding:20px"><p style="font-size:13px">لا توجد مواد في هذا الفولدر</p></div>`}
+        <div style="display:flex;flex-direction:column;gap:15px">
+          ${folderMaterials.map(m => `
+            <div class="item-card" style="margin-right:20px;border-right:3px solid var(--accent)">
+              <h3>📄 ${escapeHtml(m.title)}</h3>
+              <p>${escapeHtml(m.description||'')}</p>
+              <div class="btn-group">
+                <a href="${escapeHtml(m.url)}" target="_blank" class="btn btn-primary-solid btn-sm" data-action="view-material" data-id="${m.id}">📖 فتح</a>
+                ${admin ? `
+                  <button class="btn btn-sm btn-outline" data-action="edit-material" data-id="${m.id}">✏️</button>
+                  <button class="btn btn-sm btn-danger" data-action="delete-material" data-id="${m.id}">🗑️</button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('')}
+          
+          ${folderAssignments.map(a => `
+            <div class="item-card" style="margin-right:20px;border-right:3px solid var(--warning)">
+              <h3>📝 ${escapeHtml(a.title)}</h3>
+              <p>${escapeHtml(a.description||'')}</p>
+              <div class="btn-group">
+                <button class="btn btn-primary-solid btn-sm" data-action="start-assignment" data-id="${a.id}">ابدأ الواجب</button>
+                ${admin ? `
+                  <button class="btn btn-sm btn-outline" data-action="edit-assignment" data-id="${a.id}">✏️</button>
+                  <button class="btn btn-sm btn-danger" data-action="delete-assignment" data-id="${a.id}">🗑️</button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('')}
+          
+          ${folderMaterials.length === 0 && folderAssignments.length === 0 ? `<div class="empty-state" style="padding:20px"><p style="font-size:13px">لا توجد ملفات أو واجبات في هذا الفولدر</p></div>` : ''}
+        </div>
       </div>
     `;
   });
   
-  // المواد بدون فولدر
   const noFolderMaterials = materialsByFolder['no-folder'] || [];
-  if(noFolderMaterials.length > 0){
+  const noFolderAssignments = assignmentsByFolder['no-folder'] || [];
+  
+  if(noFolderMaterials.length > 0 || noFolderAssignments.length > 0){
     contentHTML += `
       <div class="card">
-        <div class="card-header"><h3 class="card-title">📂 مواد عامة (بدون فولدر)</h3></div>
+        <div class="card-header"><h3 class="card-title">📂 ملفات عامة (بدون فولدر)</h3></div>
         <div style="display:flex;flex-direction:column;gap:15px">
           ${noFolderMaterials.map(m => `
             <div class="item-card">
-              <h3>${escapeHtml(m.title)}</h3>
+              <h3>📄 ${escapeHtml(m.title)}</h3>
               <p>${escapeHtml(m.description||'')}</p>
               <div class="btn-group">
                 <a href="${escapeHtml(m.url)}" target="_blank" class="btn btn-primary-solid btn-sm" data-action="view-material" data-id="${m.id}">📖 فتح</a>
                 ${admin ? `<button class="btn btn-sm btn-outline" data-action="edit-material" data-id="${m.id}">✏️</button><button class="btn btn-sm btn-danger" data-action="delete-material" data-id="${m.id}">🗑️</button>` : ''}
+              </div>
+            </div>
+          `).join('')}
+          ${noFolderAssignments.map(a => `
+            <div class="item-card">
+              <h3>📝 ${escapeHtml(a.title)}</h3>
+              <p>${escapeHtml(a.description||'')}</p>
+              <div class="btn-group">
+                <button class="btn btn-primary-solid btn-sm" data-action="start-assignment" data-id="${a.id}">ابدأ الواجب</button>
+                ${admin ? `<button class="btn btn-sm btn-outline" data-action="edit-assignment" data-id="${a.id}">✏️</button><button class="btn btn-sm btn-danger" data-action="delete-assignment" data-id="${a.id}">🗑️</button>` : ''}
               </div>
             </div>
           `).join('')}
@@ -835,17 +817,16 @@ async function renderMaterials(){
     `;
   }
   
-  if(folders.length === 0 && noFolderMaterials.length === 0){
-    contentHTML = `<div class="empty-state"><div class="icon">📖</div><p>لا توجد مواد بعد</p></div>`;
+  if(folders.length === 0 && noFolderMaterials.length === 0 && noFolderAssignments.length === 0){
+    contentHTML = `<div class="empty-state"><div class="icon">📖</div><p>لا توجد ملفات بعد</p></div>`;
   }
   
   area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📖 التعلم الذاتي</h3>${addBtn}</div></div>${contentHTML}`;
   
-  // Event listeners
   if(admin){
-    $('#addFolderBtn')?.addEventListener('click', openFolderModal);
-    $('#addMaterialBtn')?.addEventListener('click', () => openMaterialModal(null));
-    $('#addAssignmentBtn')?.addEventListener('click', () => openAssignmentModal(null));
+    $('#addFolderBtn')?.addEventListener('click', () => openFolderModal());
+    $('#addMaterialBtn')?.addEventListener('click', () => openMaterialModal());
+    $('#addAssignmentBtn')?.addEventListener('click', () => openAssignmentModal());
     $$('[data-action="edit-folder"]').forEach(b => b.addEventListener('click', () => openFolderModal(parseInt(b.dataset.id))));
     $$('[data-action="delete-folder"]').forEach(b => b.addEventListener('click', () => deleteFolder(parseInt(b.dataset.id))));
     $$('[data-action="edit-material"]').forEach(b => b.addEventListener('click', () => openMaterialModal(parseInt(b.dataset.id))));
@@ -857,7 +838,6 @@ async function renderMaterials(){
   $$('[data-action="delete-assignment"]').forEach(b => b.addEventListener('click', () => deleteAssignment(parseInt(b.dataset.id))));
 }
 
-// ========== FOLDERS ==========
 function openFolderModal(id = null){
   (async () => {
     let folder = { name: '', description: '', order_index: 0 };
@@ -894,7 +874,7 @@ function openFolderModal(id = null){
 }
 
 async function deleteFolder(id){
-  if(!confirm('حذف الفولدر؟ (المواد مش هتتمسح)')) return;
+  if(!confirm('حذف الفولدر؟ (الملفات والواجبات مش هتتمسح)')) return;
   await sb.from('folders').delete().eq('id', id);
   toast('🗑️ تم', 'success');
   renderMaterials();
@@ -904,26 +884,18 @@ async function trackMaterialView(materialId){
   if(currentProfile.role !== 'student') return;
   
   try {
-    // تحقق لو الطالب فتح الملف ده قبل كده
-    const { data: existing, error: checkError } = await sb.from('material_views')
+    const { data: existing } = await sb.from('material_views')
       .select('id')
       .eq('user_id', currentProfile.id)
       .eq('material_id', materialId)
       .maybeSingle();
     
-    if(checkError) {
-      console.error('Check error:', checkError);
-      return;
-    }
-    
     if(!existing){
-      // أول مرة يفتح الملف ده → امنحه الوسام
       await sb.from('material_views').insert({ 
         user_id: currentProfile.id, 
         material_id: materialId 
       });
       
-      // امنح وسام "مستكشف" مرة واحدة
       const { data: badge } = await sb.from('badges')
         .select('id')
         .eq('name', 'مستكشف')
@@ -949,7 +921,6 @@ async function trackMaterialView(materialId){
         toast('🎉 حصلت على وسام "مستكشف 🔍"!', 'success');
       }
     }
-    // لو فتح الملف قبل كده → ما يعملش حاجة (منع الغش)
   } catch(e) { 
     console.error('Track error:', e); 
   }
@@ -965,7 +936,7 @@ function openMaterialModal(id = null){
       if(data) material = data;
     }
     
-    openModal(`<h2>${id ? 'تعديل' : 'إضافة'} مادة</h2><form id="materialForm">
+    openModal(`<h2>${id ? 'تعديل' : 'إضافة'} ملف</h2><form id="materialForm">
       <div class="input-group"><label>الفولدر</label>
         <select id="matFolder">
           <option value="">-- بدون فولدر --</option>
@@ -1043,13 +1014,12 @@ function openMaterialModal(id = null){
 
 async function deleteMaterial(id){ if(!confirm('حذف؟'))return; await sb.from('materials').delete().eq('id',id); toast('🗑️','success'); renderMaterials(); }
 
-// ========== ASSIGNMENTS ==========
 let currentQuestions = [];
 
 function openAssignmentModal(id = null){
   (async () => {
-    const { data: materials } = await sb.from('materials').select('*').order('created_at', { ascending: false });
-    let assignment = { title: '', description: '', material_id: null, questions: [] };
+    const { data: folders } = await sb.from('folders').select('*').order('order_index');
+    let assignment = { title: '', description: '', folder_id: null, questions: [] };
     
     if(id){
       const { data } = await sb.from('assignments').select('*').eq('id', id).single();
@@ -1059,10 +1029,10 @@ function openAssignmentModal(id = null){
     currentQuestions = assignment.questions || [];
     
     openModal(`<h2>${id ? 'تعديل' : 'إضافة'} واجب</h2><form id="assignForm">
-      <div class="input-group"><label>المادة المرتبطة</label>
-        <select id="assignMaterial" required>
-          <option value="">-- اختر مادة --</option>
-          ${(materials || []).map(m => `<option value="${m.id}" ${assignment.material_id == m.id ? 'selected' : ''}>${escapeHtml(m.title)}</option>`).join('')}
+      <div class="input-group"><label>الفولدر</label>
+        <select id="assignFolder" required>
+          <option value="">-- اختر فولدر --</option>
+          ${(folders || []).map(f => `<option value="${f.id}" ${assignment.folder_id == f.id ? 'selected' : ''}>${escapeHtml(f.name)}</option>`).join('')}
         </select>
       </div>
       <div class="input-group"><label>عنوان الواجب</label><input type="text" id="assignTitle" value="${escapeHtml(assignment.title)}" required/></div>
@@ -1084,7 +1054,7 @@ function openAssignmentModal(id = null){
       const payload = {
         title: $('#assignTitle').value.trim(),
         description: $('#assignDesc').value.trim(),
-        material_id: $('#assignMaterial').value ? parseInt($('#assignMaterial').value) : null,
+        folder_id: $('#assignFolder').value ? parseInt($('#assignFolder').value) : null,
         questions: currentQuestions
       };
       
@@ -1163,7 +1133,6 @@ async function startAssignment(id){
 
 async function deleteAssignment(id){ if(!confirm('حذف؟'))return; await sb.from('assignments').delete().eq('id',id); toast('🗑️','success'); renderMaterials(); }
 
-// ========== EXAMS ==========
 async function renderExams(){
   const area=$('#contentArea'); const admin=isAdmin();
   const {data:exams}=await sb.from('exams').select('*').order('id',{ascending:false});
@@ -1254,7 +1223,6 @@ async function startExam(id){
 
 async function deleteExam(id){ if(!confirm('حذف؟'))return; await sb.from('exams').delete().eq('id',id); toast('🗑️','success'); renderExams(); }
 
-// ========== RESULTS ==========
 async function renderExamResults(){
   const area = $('#contentArea');
   if(!isAdmin()){ area.innerHTML = '<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
@@ -1277,7 +1245,6 @@ async function renderAssignmentResults(){
   area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📋 نتائج الواجبات</h3></div>${body}</div>`;
 }
 
-// ========== PROJECTS ==========
 async function renderProjects(){
   const area=$('#contentArea'); const admin=isAdmin();
   const {data:projs}=await sb.from('projects').select('*').order('created_at',{ascending:false});
@@ -1291,7 +1258,7 @@ async function renderProjects(){
   $$('.delete-project-btn').forEach(b => b.addEventListener('click', () => deleteProject(parseInt(b.dataset.id))));
 }
 
-window.openProjectModal = function(){
+function openProjectModal(){
   openModal(`<h2>🎯 بروجيكت جديد</h2><form id="projForm">
     <div class="input-group"><label>العنوان</label><input type="text" id="projTitle" required/></div>
     <div class="input-group"><label>الوصف</label><textarea id="projDesc" rows="4"></textarea></div>
@@ -1323,7 +1290,7 @@ window.openProjectModal = function(){
       btn.innerHTML = 'إنشاء';
     }
   });
-};
+}
 
 function submitProject(id){
   (async () => {
@@ -1384,7 +1351,6 @@ async function deleteProjectFile(fileUrl, submissionId, projectId){
 
 async function deleteProject(id){ if(!confirm('حذف؟'))return; await sb.from('projects').delete().eq('id',id); toast('🗑️','success'); renderProjects(); }
 
-// ========== SUPPORT ==========
 async function renderSupport(){
   const area=$('#contentArea'); const admin=isAdmin();
   let q=sb.from('support_tickets').select('*, profiles(full_name, email)').order('created_at',{ascending:false});
@@ -1467,7 +1433,6 @@ async function deleteTicket(id){
   toast('🗑️ تم','success'); renderSupport();
 }
 
-// ========== ADMIN ==========
 async function renderAdmin(){
   if(!isAdmin()){ $('#contentArea').innerHTML='<div class="empty-state"><div class="icon">🔒</div><p>غير مصرح</p></div>'; return; }
   const area=$('#contentArea');
