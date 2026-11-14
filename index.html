@@ -620,21 +620,48 @@
       const { data: students } = await sb.from('profiles').select('*').eq('role','student').order('full_name');
       const { data: badge } = await sb.from('badges').select('*').eq('id', badgeId).single();
       if(!students || !students.length){ toast('⚠️ لا يوجد طلاب', 'warning'); return; }
-      openModal(`<h2>🎁 منح وسام</h2><form id="awardForm">
-        <div class="input-group"><label>الوسام</label><div class="badge badge-primary" style="font-size:14px;padding:8px 14px">${escapeHtml(badge.icon)} ${escapeHtml(badge.name)} - ${badge.points} نقطة</div></div>
-        <div class="input-group"><label>الطالب</label><select id="awardStudent" required>${students.map(s => `<option value="${s.id}">${escapeHtml(s.full_name)}</option>`).join('')}</select></div>
-        <div class="input-group"><label>العدد</label><input type="number" id="awardQty" value="1" min="1"></div>
-        <button type="submit" class="btn-primary">منح</button></form>`);
-      $('#awardForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        const studentId = $('#awardStudent').value;
-        const qty = parseInt($('#awardQty').value) || 1;
-        const { data: existing } = await sb.from('user_badges').select('*').eq('user_id', studentId).eq('badge_id', badgeId).maybeSingle();
-        if(existing){ await sb.from('user_badges').update({ quantity: (existing.quantity || 0) + qty }).eq('id', existing.id); }
-        else { await sb.from('user_badges').insert({ user_id: studentId, badge_id: badgeId, quantity: qty }); }
-        await recalculatePoints(studentId);
-        toast('✅ تم المنح', 'success'); closeModal();
+      
+      // Store badgeId in global variable
+      window.currentAwardBadgeId = badgeId;
+      
+      openModal(`<h2>🎁 منح وسام</h2>
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:60px">${escapeHtml(badge.icon || '🏅')}</div>
+          <div style="font-size:18px;font-weight:800;margin-top:8px">${escapeHtml(badge.name)}</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px">${badge.points || 0} نقطة لكل وسام</div>
+        </div>
+        <form id="awardForm" onsubmit="submitAwardForm(event)">
+          <div class="input-group"><label>اختر الطالب</label><select id="awardStudent" required>${students.map(s => `<option value="${s.id}">${escapeHtml(s.full_name)}</option>`).join('')}</select></div>
+          <div class="input-group"><label>عدد الأوسمة</label><input type="number" id="awardQty" value="1" min="1" max="100" required style="font-size:18px;text-align:center"></div>
+          <div style="background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);padding:12px;border-radius:8px;margin-bottom:16px;text-align:center">
+            <span style="color:var(--accent);font-weight:700">إجمالي النقاط: <span id="totalPoints">${badge.points || 0}</span> نقطة</span>
+          </div>
+          <button type="submit" class="btn-primary">🎁 منح الوسام</button>
+        </form>`);
+      
+      // Add event listener for quantity change
+      $('#awardQty').addEventListener('input', function(){
+        const qty = parseInt(this.value) || 1;
+        const points = (badge.points || 0) * qty;
+        $('#totalPoints').textContent = points;
       });
+    };
+    window.submitAwardForm = async function(e){
+      e.preventDefault();
+      const badgeId = window.currentAwardBadgeId;
+      const studentId = $('#awardStudent').value;
+      const qty = parseInt($('#awardQty').value) || 1;
+      
+      const { data: existing } = await sb.from('user_badges').select('*').eq('user_id', studentId).eq('badge_id', badgeId).maybeSingle();
+      if(existing){ 
+        await sb.from('user_badges').update({ quantity: (existing.quantity || 0) + qty }).eq('id', existing.id); 
+      } else { 
+        await sb.from('user_badges').insert({ user_id: studentId, badge_id: badgeId, quantity: qty }); 
+      }
+      
+      await recalculatePoints(studentId);
+      toast(`✅ تم منح ${qty} وسام`, 'success'); 
+      closeModal();
     };
     window.deleteBadge = async function(id){ if(!confirm('حذف؟')) return; await sb.from('badges').delete().eq('id', id); toast('🗑️ تم','success'); renderBadges(); };
 
