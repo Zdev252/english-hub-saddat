@@ -587,7 +587,7 @@ async function editBadge(badgeId){
     
     if(error){ toast('❌ ' + error.message, 'error'); return; }
     
-    // إعادة حساب نقاط كل الطلاب اللي عندهم الوسام ده
+    // update points for students with this badge
     const { data: affectedUsers } = await sb.from('user_badges')
       .select('user_id')
       .eq('badge_id', badgeId);
@@ -690,7 +690,7 @@ async function renderLessons(){
   if(!lessons||!lessons.length){
     body=`<div class="empty-state"><div class="icon">📚</div><p>لا توجد حصص</p></div>`;
   } else {
-    // نستخدم Promise.all عشان ننتظر كل lessonCard
+    // wait until all lesson cards are ready
     const cards = await Promise.all(lessons.map(l => lessonCard(l, admin)));
     body=`<div style="display:flex;flex-direction:column;gap:15px">${cards.join('')}</div>`;
   }
@@ -710,7 +710,7 @@ async function lessonCard(l,admin){
   if(start && now >= start && (!end || now <= end)){ status = 'live'; statusClass = 'badge-danger'; statusText = 'مباشر 🔴'; }
   else if(end && now > end){ status = 'completed'; statusClass = 'badge-success'; statusText = 'انتهت'; }
   
-  // جلب حالة حضور الطالب لو الحصة انتهت
+  // get the student's attendance when the lesson is over
   let studentAttendanceHTML = '';
   if(!admin && status === 'completed'){
     const { data: att } = await sb.from('attendance')
@@ -729,7 +729,7 @@ async function lessonCard(l,admin){
     }
   }
   
-  // زر الدخول يظهر فقط لو الحصة مباشرة
+  // show the join button only for live lessons
   const joinBtn = (status === 'live' && l.lesson_link) 
     ? `<a href="${escapeHtml(l.lesson_link)}" target="_blank" class="btn btn-success btn-sm" style="margin-bottom:10px; width:100%">🔗 دخول الحصة الآن</a>`
     : (status === 'upcoming' && l.lesson_link 
@@ -794,7 +794,7 @@ async function renderAttendancePage(){
   
   area.innerHTML = '<div class="empty-state"><span class="loader"></span></div>';
   
-  // جلب الحصص والطلاب
+  // get lessons and students
   const [lessonsRes, studentsRes] = await Promise.all([
     sb.from('lessons').select('*').order('start_time', { ascending: false }),
     sb.from('profiles').select('*').eq('role', 'student').order('full_name')
@@ -857,7 +857,7 @@ async function loadAttendanceForLesson(lessonId, students){
       <div style="display:flex;flex-direction:column;gap:10px;max-height:500px;overflow-y:auto">
         ${students.map(s => {
           const currentStatus = attendanceMap[s.id] || 'absent';
-          // نحسب عدد الشيكات بناءً على الحالة الحالية
+          // check the current attendance status
           let check1 = false, check2 = false, check3 = false;
           if(currentStatus === 'present'){ check1 = true; check2 = true; check3 = true; }
           
@@ -897,7 +897,7 @@ async function loadAttendanceForLesson(lessonId, students){
   
   $('#attendanceContent').innerHTML = content;
   
-  // تحديث الحالة عند تغيير checkbox
+  // update the status when a checkbox changes
   $$('.attendance-check').forEach(cb => {
     cb.addEventListener('change', () => {
       const studentId = cb.dataset.student;
@@ -915,7 +915,7 @@ async function loadAttendanceForLesson(lessonId, students){
     });
   });
   
-  // حفظ الحضور
+  // save attendance
   $('#saveAttendanceBtn').addEventListener('click', async () => {
     const btn = $('#saveAttendanceBtn');
     btn.disabled = true;
@@ -924,14 +924,14 @@ async function loadAttendanceForLesson(lessonId, students){
     try {
       const studentsData = {};
       
-      // نجمع البيانات لكل طالب
+      // collect attendance for each student
       $$('.attendance-check').forEach(cb => {
         const studentId = cb.dataset.student;
         if(!studentsData[studentId]) studentsData[studentId] = 0;
         if(cb.checked) studentsData[studentId]++;
       });
       
-      // نحفظ لكل طالب
+      // save attendance for each student
       for(const [studentId, checkCount] of Object.entries(studentsData)){
         const status = checkCount >= 2 ? 'present' : 'absent';
         
@@ -961,7 +961,7 @@ async function renderMaterials(){
     sb.from('assignments').select('*').order('created_at', { ascending: false })
   ]);
   
-  // فلتر الفولدرات المخفية عن الطالب
+  // hide folders that students should not see
   const folders = (foldersRes.data || []).filter(f => admin || f.is_visible);
   const materials = materialsRes.data || [];
   const assignments = assignmentsRes.data || [];
@@ -1075,12 +1075,12 @@ async function renderMaterials(){
     `;
   }
   
-  // الإصلاح: لو مفيش حاجة، حط الرسالة جوه الكارد
+  // keep the empty message inside the card
   if(folders.length === 0 && noFolderMaterials.length === 0 && noFolderAssignments.length === 0){
     contentHTML = `<div class="empty-state"><div class="icon">📖</div><p>لا توجد ملفات بعد</p></div>`;
   }
   
-  // الإصلاح: حط كل حاجة جوه كارد واحد
+  // keep everything inside one card
   area.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📖 التعلم الذاتي</h3>${addBtn}</div>${contentHTML}</div>`;
   
   if(admin){
@@ -1584,7 +1584,7 @@ function openProjectModal(){
         toast('✅ تم إنشاء البروجيكت','success');
         closeModal();
         
-        // إعادة تحميل الصفحة بعد فترة قصيرة
+        // reload the page after a short delay
         setTimeout(() => {
           renderProjects();
         }, 500);
